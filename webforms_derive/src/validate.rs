@@ -63,6 +63,7 @@ fn parse_namevalue_attr(field: &syn::Field, nv: &syn::MetaNameValue, tokens: &mu
 
 pub(crate) fn impl_validate_macro(ast: syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
+    let generics = &ast.generics;
     let fields = match ast.data {
         syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(fields), .. }) => fields.named,
         _ => panic!("ValidateForm only defined on data structs!"),
@@ -79,7 +80,7 @@ pub(crate) fn impl_validate_macro(ast: syn::DeriveInput) -> TokenStream {
     });
 
     let gen = quote! {
-        impl<'a> ValidateForm for #name<'a> {
+        impl #generics ValidateForm for #name #generics {
             fn validate(&self) -> Result<(), Vec<ValidateError>> {
                 let mut v: Vec<ValidateError> = Vec::new();
 
