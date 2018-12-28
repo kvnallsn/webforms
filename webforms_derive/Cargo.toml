@@ -1,0 +1,13 @@
+[package]
+name = "webforms_derive"
+version = "0.1.0"
+authors = ["Kevin Allison <kvnallsn@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "0.15.23", features = ["derive"] }
+quote = "0.6.10"
+proc-macro2 = "0.4"

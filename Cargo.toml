@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "webforms",
+    "webforms_derive",
+    "webforms_test",
+]

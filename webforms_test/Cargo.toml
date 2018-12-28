@@ -1,0 +1,8 @@
+[package]
+name = "webforms_test"
+version = "0.1.0"
+authors = ["Kevin Allison <kvnallsn@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+webforms = { path = "../webforms" }
