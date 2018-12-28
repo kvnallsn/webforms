@@ -4,6 +4,8 @@ use crate::proc_macro::TokenStream;
 use quote::quote;
 use syn;
 
+mod validators;
+
 fn parse_meta(field: &syn::Field, meta: &syn::Meta, tokens: &mut proc_macro2::TokenStream) {
     //match attr.parse_meta().expect("Unknown webform attribute") {
     match meta {
@@ -13,8 +15,10 @@ fn parse_meta(field: &syn::Field, meta: &syn::Meta, tokens: &mut proc_macro2::To
     }
 }
 
-fn parse_word_attr(_field: &syn::Field, _ident: &syn::Ident, _tokens: &mut proc_macro2::TokenStream) {
-    // Do nothing...for now
+fn parse_word_attr(field: &syn::Field, ident: &syn::Ident, tokens: &mut proc_macro2::TokenStream) {
+    if ident == "email" {
+            crate::validate::validators::validate_email(field, tokens);
+    }
 }
 
 fn parse_list_attr(field: &syn::Field, list: &syn::MetaList, tokens: &mut proc_macro2::TokenStream) {
@@ -27,42 +31,30 @@ fn parse_list_attr(field: &syn::Field, list: &syn::MetaList, tokens: &mut proc_m
 }
 
 fn parse_namevalue_attr(field: &syn::Field, nv: &syn::MetaNameValue, tokens: &mut proc_macro2::TokenStream) {
-    let name = &field.ident;
     if nv.ident == "min_length" {
         match nv.lit {
-            syn::Lit::Int(ref i) => tokens.extend(quote! {
-                if self.#name.len() < #i {
-                    v.push(ValidateError::InputTooShort { field: stringify!(#name), min: #i });
-                }
-            }),
+            syn::Lit::Int(ref i) => crate::validate::validators::validate_min_length(field, i, tokens),
             _ => panic!("min_length requires an integer argument")
         }
     } else if nv.ident == "max_length" {
         match nv.lit {
-            syn::Lit::Int(ref i) => tokens.extend(quote! {
-                if self.#name.len() > #i {
-                    v.push(ValidateError::InputTooLong { field: stringify!(#name), max: #i });
-                }
-            }),
+            syn::Lit::Int(ref i) => crate::validate::validators::validate_max_length(field, i, tokens),
             _ => panic!("max_length requires an integer argument")
         }
     } else if nv.ident == "min_value" {
         match nv.lit {
-            syn::Lit::Int(ref i) => tokens.extend(quote! {
-                if self.#name < #i {
-                    v.push(ValidateError::TooSmall{ field: stringify!(#name), min: #i });
-                }
-            }),
+            syn::Lit::Int(ref i) => crate::validate::validators::validate_min_value(field, i, tokens),
             _ => panic!("min_value requires an integer argument")
         }
     } else if nv.ident == "max_value" {
         match nv.lit {
-            syn::Lit::Int(ref i) => tokens.extend(quote! {
-                if self.#name > #i {
-                    v.push(ValidateError::TooLarge { field: stringify!(#name), max: #i });
-                }
-            }),
+            syn::Lit::Int(ref i) => crate::validate::validators::validate_max_value(field, i, tokens),
             _ => panic!("max_value requires an integer argument")
+        }
+    } else if nv.ident == "regex" {
+        match nv.lit {
+            syn::Lit::Str(ref s) => crate::validate::validators::validate_regex(field, s, tokens),
+            _ => panic!("regex requires a string argument")
         }
     } else {
         println!("Unknown ident: {}", nv.ident.to_string());
@@ -79,7 +71,7 @@ pub(crate) fn impl_validate_macro(ast: syn::DeriveInput) -> TokenStream {
     let reqs = fields.iter().map(|field| {
         let mut tokens = proc_macro2::TokenStream::new();
         for attr in &field.attrs {
-            if attr.path.is_ident("validate") {
+            if attr.path.is_ident("validate")  {
                 parse_meta(field, &attr.parse_meta().expect("Unknown web form attribute"), &mut tokens);
             }
         }
@@ -87,8 +79,6 @@ pub(crate) fn impl_validate_macro(ast: syn::DeriveInput) -> TokenStream {
     });
 
     let gen = quote! {
-        use webforms::ValidateError;
-
         impl<'a> ValidateForm for #name<'a> {
             fn validate(&self) -> Result<(), Vec<ValidateError>> {
                 let mut v: Vec<ValidateError> = Vec::new();

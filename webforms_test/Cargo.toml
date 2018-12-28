@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 webforms = { path = "../webforms" }
+regex = "1"
+lazy_static = "1.2.0"

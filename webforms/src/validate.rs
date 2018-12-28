@@ -17,6 +17,12 @@ pub enum ValidateError {
 
     /// Input contained invalid characters (invalid)
     InvalidCharacters { field: &'static str },
+
+    /// The email entered does not match our email regex
+    InvalidEmail { field: &'static str },
+
+    /// The field failed the user-passed regex
+    InvalidRegex { field: &'static str },
 }
 
 /// Validates a form according to attributes set via #[validate] attribute
