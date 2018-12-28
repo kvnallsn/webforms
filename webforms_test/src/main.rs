@@ -1,5 +1,5 @@
 
-use webforms::{ValidateForm, ValidateError};
+use webforms::validate::{ValidateForm, ValidateError};
 use regex::Regex;
 use lazy_static::lazy_static;
 

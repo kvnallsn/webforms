@@ -4,5 +4,10 @@ version = "0.2.1"
 authors = ["Kevin Allison <kvnallsn@gmail.com>"]
 edition = "2018"
 
+[features]
+default = ["validate", "html"]
+validate = []
+html = []
+
 [dependencies]
 webforms_derive = { path = "../webforms_derive" }

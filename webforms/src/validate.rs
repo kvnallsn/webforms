@@ -1,5 +1,8 @@
 //! Form validation, custom derive macro to auto-generate a validate method
 
+// Import and re-export the macro
+pub use webforms_derive::ValidateForm;
+
 /// Errors that can appear if validation fails
 #[derive(Debug)]
 pub enum ValidateError {
@@ -28,7 +31,7 @@ pub enum ValidateError {
 /// Validates a form according to attributes set via #[validate] attribute
 /// on a given struct
 pub trait ValidateForm {
-    /// Performs form validation, retuns Ok if validation passed, or a list
+    /// Performs form validation, retuns Ok if validation passed, or a vector
     /// of errors if validation failed
     fn validate(&self) -> Result<(), Vec<ValidateError>>;
 }
