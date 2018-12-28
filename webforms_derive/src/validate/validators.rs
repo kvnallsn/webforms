@@ -15,7 +15,7 @@ pub(crate) fn validate_email(field: &syn::Field, tokens: &mut proc_macro2::Token
             static ref form_regex_email: Regex = Regex::new(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$").expect("failed to create email regex to validate form");
         }
 
-        if !form_regex_email.is_match(self.#name) {
+        if !form_regex_email.is_match(&self.#name) {
             v.push(ValidateError::InvalidEmail { field: stringify!(#name) })
         }
     });
@@ -34,7 +34,7 @@ pub(crate) fn validate_regex(field: &syn::Field, regex: &syn::LitStr, tokens: &m
             static ref #id: Regex = Regex::new(&#r).expect("failed to create email regex to validate form");
         }
 
-        if !#id.is_match(self.#name) {
+        if !#id.is_match(&self.#name) {
             v.push(ValidateError::InvalidRegex { field: stringify!(#name) })
         }
     });
