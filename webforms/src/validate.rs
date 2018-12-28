@@ -25,12 +25,23 @@
 //! #[derive(ValidateForm)]
 //! struct LoginForm {
 //! 
-//!      #[validate(min_length = 3)]
-//!      #[validate(max_length = 20)]
-//!      pub username: String,
-//! 
 //!      #[validate(email)]
 //!      pub email: String,
+//! 
+//!      #[validate(min_length = 8)]
+//!      #[validate(max_length = 20)]
+//!      pub password: String,
+//! }
+//! 
+//! fn main() {
+//!    let form = LoginForm {
+//!        email: "test@someemail.com".to_owned(),
+//!        password: "itsasecret".to_owned(),
+//!    };
+//! 
+//!    if let Err(e) = form.validate() {
+//!        println!("{:?}", e);
+//!    }
 //! }
 //! ```
 
