@@ -1,4 +1,5 @@
 //! Macro implementations for WebForms
+#![recursion_limit="128"]
 
 mod validate;
 extern crate proc_macro;

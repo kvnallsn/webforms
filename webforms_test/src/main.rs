@@ -24,6 +24,6 @@ fn main() {
 
     match form.validate() {
         Ok(_) => println!("Validate Success!"),
-        _ => println!("Validate Failure!"),
+        Err(e) => println!("Errors: {:?}", e),
     };
 }

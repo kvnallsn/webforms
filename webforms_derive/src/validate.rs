@@ -95,8 +95,10 @@ pub(crate) fn impl_validate_macro(ast: syn::DeriveInput) -> TokenStream {
 
                 #(#reqs)*
 
-                println!("{:?}", v);
-                Err(v)
+                match v.len() {
+                    0 => Ok(()),
+                    _ => Err(v),
+                }
             }
         }
     };
