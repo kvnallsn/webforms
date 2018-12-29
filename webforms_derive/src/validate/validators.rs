@@ -1,12 +1,12 @@
 //! All validation code goes here
 
-use quote::quote;
 use proc_macro2::Span;
+use quote::quote;
 use rand::Rng;
 use syn;
 
 /// Validates an email address using the regular expression below
-/// 
+///
 /// In order to use this, the using crate MUST have regex and lazy_static listed as dependancies
 pub(crate) fn validate_email(field: &syn::Field, tokens: &mut proc_macro2::TokenStream) {
     let name = &field.ident;
@@ -21,14 +21,41 @@ pub(crate) fn validate_email(field: &syn::Field, tokens: &mut proc_macro2::Token
     });
 }
 
+/// Validates against a US Phone number
+///
+/// Required Dependancies: regex, lazy_static
+pub(crate) fn validate_phone_number(field: &syn::Field, tokens: &mut proc_macro2::TokenStream) {
+    let name = &field.ident;
+    tokens.extend(quote! {
+        lazy_static! {
+            static ref form_regex_phone: Regex = Regex::new(r"^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$").expect("failed to create phone number regex to validate form");
+        }
+
+        if !form_regex_phone.is_match(&self.#name) {
+            v.push(ValidateError::InvalidPhoneNumber { field: stringify!(#name) })
+        }
+    });
+}
+
 /// Validates an email address using the regular expression below
-/// 
+///
 /// In order to use this, the using crate MUST have regex and lazy_static listed as dependancies
-pub(crate) fn validate_regex(field: &syn::Field, regex: &syn::LitStr, tokens: &mut proc_macro2::TokenStream) {
+pub(crate) fn validate_regex(
+    field: &syn::Field,
+    regex: &syn::LitStr,
+    tokens: &mut proc_macro2::TokenStream,
+) {
     let name = &field.ident;
     let r = regex.value();
     let mut rng = rand::thread_rng();
-    let id = syn::Ident::new(&format!("form_regex_{}_{}", name.as_ref().unwrap().to_string(), rng.gen::<u32>()), Span::call_site());
+    let id = syn::Ident::new(
+        &format!(
+            "form_regex_{}_{}",
+            name.as_ref().unwrap().to_string(),
+            rng.gen::<u32>()
+        ),
+        Span::call_site(),
+    );
     tokens.extend(quote! {
         lazy_static! {
             static ref #id: Regex = Regex::new(&#r).expect("failed to create email regex to validate form");
@@ -41,7 +68,11 @@ pub(crate) fn validate_regex(field: &syn::Field, regex: &syn::LitStr, tokens: &m
 }
 
 /// Validates a string has a minimum length
-pub(crate) fn validate_min_length(field: &syn::Field, min: &syn::LitInt, tokens: &mut proc_macro2::TokenStream) {
+pub(crate) fn validate_min_length(
+    field: &syn::Field,
+    min: &syn::LitInt,
+    tokens: &mut proc_macro2::TokenStream,
+) {
     let name = &field.ident;
     tokens.extend(quote! {
         if self.#name.len() < #min {
@@ -51,7 +82,11 @@ pub(crate) fn validate_min_length(field: &syn::Field, min: &syn::LitInt, tokens:
 }
 
 /// Validates a string has a maximum length
-pub(crate) fn validate_max_length(field: &syn::Field, max: &syn::LitInt, tokens: &mut proc_macro2::TokenStream) {
+pub(crate) fn validate_max_length(
+    field: &syn::Field,
+    max: &syn::LitInt,
+    tokens: &mut proc_macro2::TokenStream,
+) {
     let name = &field.ident;
     tokens.extend(quote! {
         if self.#name.len() > #max {
@@ -61,7 +96,11 @@ pub(crate) fn validate_max_length(field: &syn::Field, max: &syn::LitInt, tokens:
 }
 
 /// Validates an integer has a minimum value
-pub(crate) fn validate_min_value(field: &syn::Field, min: &syn::LitInt, tokens: &mut proc_macro2::TokenStream) {
+pub(crate) fn validate_min_value(
+    field: &syn::Field,
+    min: &syn::LitInt,
+    tokens: &mut proc_macro2::TokenStream,
+) {
     let name = &field.ident;
     tokens.extend(quote! {
         if self.#name < #min {
@@ -71,10 +110,14 @@ pub(crate) fn validate_min_value(field: &syn::Field, min: &syn::LitInt, tokens: 
 }
 
 /// Validates an integerr has a maximum value
-pub(crate) fn validate_max_value(field: &syn::Field, max: &syn::LitInt, tokens: &mut proc_macro2::TokenStream) {
+pub(crate) fn validate_max_value(
+    field: &syn::Field,
+    max: &syn::LitInt,
+    tokens: &mut proc_macro2::TokenStream,
+) {
     let name = &field.ident;
     tokens.extend(quote! {
-        if self.#name < #max {
+        if self.#name > #max {
             v.push(ValidateError::TooLarge { field: stringify!(#name), max: #max });
         }
     });

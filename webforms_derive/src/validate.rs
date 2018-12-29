@@ -18,6 +18,8 @@ fn parse_meta(field: &syn::Field, meta: &syn::Meta, tokens: &mut proc_macro2::To
 fn parse_word_attr(field: &syn::Field, ident: &syn::Ident, tokens: &mut proc_macro2::TokenStream) {
     if ident == "email" {
             crate::validate::validators::validate_email(field, tokens);
+    } else if ident == "phone" {
+            crate::validate::validators::validate_phone_number(field, tokens);
     }
 }
 
