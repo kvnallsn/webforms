@@ -14,8 +14,8 @@
 //! | max_value | Integer/Float | Integer/Float | Checks if input is less than or euqal to specified value | |
 //!
 //! Notes:
-//! 1 - Requires crate to depend on `regex` and `lazy_static` crates and import them.  See below for example.
-//! 2 - Currently only matches on US phone numbers
+//! * 1 - Requires crate to depend on `regex` and `lazy_static` crates and import them.  See below for example.
+//! * 2 - Currently only matches on US phone numbers
 //!
 //! # Example
 //!
@@ -111,6 +111,8 @@ mod tests {
         #[validate(min_value = 18)]
         #[validate(max_value = 65)]
         pub age: i16,
+
+        pub opt_number: Option<i16>,
     }
 
     #[test]
@@ -121,6 +123,7 @@ mod tests {
             some_string: "password123!",
             phone: "+1 111-111-1111",
             age: 25,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -135,6 +138,7 @@ mod tests {
             some_string: "password123!",
             phone: "+1 111-111-1111",
             age: 25,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -156,6 +160,7 @@ mod tests {
             some_string: "password123!",
             phone: "+1 111-111-1111",
             age: 25,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -177,6 +182,7 @@ mod tests {
             some_string: "password123!",
             phone: "+1 111-111-1111",
             age: 25,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -198,6 +204,7 @@ mod tests {
             some_string: "password123",
             phone: "+1 111-111-1111",
             age: 25,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -219,6 +226,7 @@ mod tests {
             some_string: "password123!",
             phone: "1-111-1111",
             age: 25,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -240,6 +248,7 @@ mod tests {
             some_string: "password123!",
             phone: "+1 111-111-1111",
             age: 10,
+            opt_number: None,
         };
 
         let res = form.validate();
@@ -261,6 +270,7 @@ mod tests {
             some_string: "password123!",
             phone: "+1 111-111-1111",
             age: 70,
+            opt_number: None,
         };
 
         let res = form.validate();

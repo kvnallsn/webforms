@@ -1,8 +1,6 @@
-
-use webforms::validate::{ValidateForm, ValidateError};
-use regex::Regex;
 use lazy_static::lazy_static;
-
+use regex::Regex;
+use webforms::validate::{ValidateError, ValidateForm};
 
 #[derive(ValidateForm)]
 struct LoginForm<'a> {
@@ -11,7 +9,7 @@ struct LoginForm<'a> {
     #[validate(regex = "^mike$")]
     pub username: &'a str,
 
-    #[validate(min_length = 8)] 
+    #[validate(min_length = 8)]
     pub password: &'a str,
 
     #[validate(email)]
@@ -20,7 +18,6 @@ struct LoginForm<'a> {
     #[validate(min_value = 18)]
     pub age: i32,
 }
-
 
 fn main() {
     let form = LoginForm {
