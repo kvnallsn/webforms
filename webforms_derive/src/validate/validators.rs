@@ -40,8 +40,9 @@ pub(crate) fn write(info: &ValidateFieldInfo, tokens: &mut proc_macro2::TokenStr
                 }
             },
             ValidateType::Regex(id) => {
+                let rid = syn::Ident::new(&id, Span::call_site());
                 quote! {
-                    if !#id.is_match(&self.#name) {
+                    if !#rid.is_match(&self.#name) {
                         v.push(ValidateError::InvalidRegex { field: stringify!(#name) })
                     }
                 }
@@ -65,10 +66,12 @@ pub(crate) fn write(info: &ValidateFieldInfo, tokens: &mut proc_macro2::TokenStr
 ///
 /// In order to use this, the using crate MUST have regex and lazy_static listed as dependancies
 pub(crate) fn validate_email(struct_info: &mut ValidateInfo, info: &mut ValidateFieldInfo) {
-    let id = syn::Ident::new("form_regex_email", Span::call_site());
-    struct_info.regex_tokens.extend(quote! {
-        static ref #id: Regex = Regex::new(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$").expect("failed to create email regex to validate form");
-    });
+    let id = "form_regex_email".to_owned();
+    let regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$".to_owned();
+
+    if !struct_info.regex_tokens.contains_key(&id) {
+        struct_info.regex_tokens.insert(id.clone(), regex);
+    }
 
     info.attrs.push(ValidateType::Regex(id));
 }
@@ -77,10 +80,12 @@ pub(crate) fn validate_email(struct_info: &mut ValidateInfo, info: &mut Validate
 ///
 /// Required Dependancies: regex, lazy_static
 pub(crate) fn validate_phone_number(struct_info: &mut ValidateInfo, info: &mut ValidateFieldInfo) {
-    let id = syn::Ident::new("form_regex_phone", Span::call_site());
-    struct_info.regex_tokens.extend(quote! {
-        static ref #id: Regex = Regex::new(r"^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$").expect("failed to create phone number regex to validate form");
-    });
+    let id = "form_regex_us_phone".to_owned();
+    let regex = r"^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$".to_owned();
+
+    if !struct_info.regex_tokens.contains_key(&id) {
+        struct_info.regex_tokens.insert(id.clone(), regex);
+    }
 
     info.attrs.push(ValidateType::Regex(id));
 }
@@ -96,18 +101,17 @@ pub(crate) fn validate_regex(
     let name = &info.field.ident;
     let r = regex.value();
     let mut rng = rand::thread_rng();
-    let id = syn::Ident::new(
-        &format!(
-            "form_regex_{}_{}",
-            name.as_ref().unwrap().to_string(),
-            rng.gen::<u32>()
-        ),
-        Span::call_site(),
+    let id = format!(
+        "form_regex_{}_{}",
+        name.as_ref().unwrap().to_string(),
+        rng.gen::<u32>()
     );
 
-    struct_info.regex_tokens.extend(quote! {
-        static ref #id: Regex = Regex::new(&#r).expect("failed to create email regex to validate form");
-    });
+    if !struct_info.regex_tokens.contains_key(&id) {
+        struct_info.regex_tokens.insert(id.clone(), r);
+    } else {
+        panic!("regex already defined!");
+    }
 
     info.attrs.push(ValidateType::Regex(id));
 }

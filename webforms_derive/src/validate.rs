@@ -1,19 +1,25 @@
 //! Validate macro implementation
 
 use crate::proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::{quote, ToTokens};
+use std::collections::HashMap;
 use syn;
 
 mod validators;
 
+/// Various kinds of validation types we support along with
+/// the necessary critera to validate the actual value
 pub(crate) enum ValidateType {
     StringMin(syn::LitInt),
     StringMax(syn::LitInt),
     ValueMin(syn::LitInt),
     ValueMax(syn::LitInt),
-    Regex(syn::Ident),
+    Regex(String),
 }
 
+/// Container for a given validation field and all
+/// #[validate] attributes applied to it
 pub(crate) struct ValidateFieldInfo<'a> {
     pub field: &'a syn::Field,
     pub attrs: Vec<ValidateType>,
@@ -26,20 +32,35 @@ impl<'a> ToTokens for ValidateFieldInfo<'a> {
     }
 }
 
+/// Validation informatoin for the entire struct deriving
+/// ValidateFrom
 pub(crate) struct ValidateInfo<'a> {
-    pub regex_tokens: proc_macro2::TokenStream,
+    pub regex_tokens: HashMap<String, String>,
     pub fields: Vec<ValidateFieldInfo<'a>>,
 }
 
 impl<'a> ToTokens for ValidateInfo<'a> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let fields = &self.fields;
-        let regex = &self.regex_tokens;
-        tokens.extend(quote! {
-            lazy_static! {
-                #regex
-            }
 
+        // If we're using a regex matcher, expand the regex using lazy_static
+        // to ensure it only compiles once
+        if self.regex_tokens.len() > 0 {
+            let regex_tokens = self.regex_tokens.iter().map(|(id, regex)| {
+                let rid = syn::Ident::new(&id, Span::call_site());
+                quote! {
+                    static ref #rid: Regex = Regex::new(&#regex).expect("failed to compile regex");
+                }
+            });
+
+            tokens.extend(quote! {
+                lazy_static! {
+                    #(#regex_tokens)*
+                }
+            });
+        }
+
+        tokens.extend(quote! {
             #(#fields)*
         });
     }
@@ -129,7 +150,7 @@ pub(crate) fn impl_validate_macro(ast: syn::DeriveInput) -> TokenStream {
     };
 
     let mut validate_info = ValidateInfo {
-        regex_tokens: proc_macro2::TokenStream::new(),
+        regex_tokens: HashMap::new(),
         fields: vec![],
     };
 
