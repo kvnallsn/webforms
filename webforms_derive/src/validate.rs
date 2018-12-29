@@ -16,6 +16,8 @@ pub(crate) enum ValidateType {
     ValueMin(syn::LitInt),
     ValueMax(syn::LitInt),
     Regex(String),
+    Email(String),
+    Phone(String),
 }
 
 /// Container for a given validation field and all

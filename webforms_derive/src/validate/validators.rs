@@ -46,8 +46,23 @@ pub(crate) fn write(info: &ValidateFieldInfo, tokens: &mut proc_macro2::TokenStr
                         v.push(ValidateError::InvalidRegex { field: stringify!(#name) })
                     }
                 }
+            },
+            ValidateType::Email(id) => {
+                let rid = syn::Ident::new(&id, Span::call_site());
+                quote! {
+                    if !#rid.is_match(&self.#name) {
+                        v.push(ValidateError::InvalidEmail { field: stringify!(#name) })
+                    }
+                }
+            },
+            ValidateType::Phone(id) => {
+                let rid = syn::Ident::new(&id, Span::call_site());
+                quote! {
+                    if !#rid.is_match(&self.#name) {
+                        v.push(ValidateError::InvalidPhoneNumber { field: stringify!(#name) })
+                    }
+                }
             }
-            _ => panic!(""),
         });
     }
 
@@ -73,7 +88,7 @@ pub(crate) fn validate_email(struct_info: &mut ValidateInfo, info: &mut Validate
         struct_info.regex_tokens.insert(id.clone(), regex);
     }
 
-    info.attrs.push(ValidateType::Regex(id));
+    info.attrs.push(ValidateType::Email(id));
 }
 
 /// Validates against a US Phone number
@@ -87,7 +102,7 @@ pub(crate) fn validate_phone_number(struct_info: &mut ValidateInfo, info: &mut V
         struct_info.regex_tokens.insert(id.clone(), regex);
     }
 
-    info.attrs.push(ValidateType::Regex(id));
+    info.attrs.push(ValidateType::Phone(id));
 }
 
 /// Validates an email address using the regular expression below
