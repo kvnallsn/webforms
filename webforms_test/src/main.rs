@@ -3,10 +3,11 @@ use regex::Regex;
 use webforms::validate::{ValidateError, ValidateForm};
 
 #[derive(ValidateForm)]
+#[validate_regex(user_re = r"^mark$")]
 struct LoginForm<'a> {
     #[validate(min_length = 3)]
     #[validate(max_length = 10)]
-    #[validate(regex = "^mike$")]
+    #[validate(compiled_regex = "user_re")]
     pub username: &'a str,
 
     #[validate(min_length = 8)]

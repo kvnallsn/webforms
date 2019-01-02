@@ -94,6 +94,7 @@ mod tests {
     use regex::Regex;
 
     #[derive(ValidateForm)]
+    #[validate_regex(compiled_re = r"^compiled$")]
     struct TestForm<'a> {
         #[validate(min_length = 3)]
         #[validate(max_length = 20)]
