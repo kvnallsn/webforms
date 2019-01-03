@@ -42,11 +42,12 @@ pub fn main() {
 
 validate() returns Ok(()) if validation suceeded or a vector of ValidationError types, each describing what field failed validation.
 
-## HTML Generate
+## HTML Generation
 
-TBD
+TODO: Goal is to implement a method (perhans `render()`) that can be called from templating libraries to render a form to HTML
 
 ## Information
 
 License: MIT
+
 Author: Kevin Allison
