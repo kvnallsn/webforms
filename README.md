@@ -4,7 +4,35 @@ This library supports validating and (in the future) rendering HTML forms for us
 
 ## Form Validation
 
-To add form validation to a struct, implement or derive the ValidateForm trait.
+To add form validation to a struct, implement or derive the ValidateForm trait.  Validator attributes can either be applied to the struct or to individual fields.
+
+Struct attribute: validate_regex
+
+| Validator    | Type  | Argument Type | Description                                            | Notes |
+| ------------ | ----- | ------------- | ------------------------------------------------------ | ----- |
+| *identifier* | Ident | Regex         | Creates an identifier that links to the regex provided | 1     |
+
+Notes:
+
+1. Requires the `lazy_static` and `regex` crates as dependencies
+
+Field attribute: validate
+
+| Validator      | Type    | Argument Type | Description                                                             | Notes |
+| -------------- | ------- | ------------- | ----------------------------------------------------------------------- | ----- |
+| email          | String  | None          | Checks if input is a valid email address                                | 1     |
+| phone          | String  | None          | Checks if input is a valid **US** phone number                          | 1     |
+| min_length     | String  | Integer       | Checks if input length in characters is greater than the value provided |       |
+| max_length     | String  | Integer       | Checks if input length in characters is less than the value provided    |       |
+| min_value      | Numeric | Numeric       | Checks if input is greater than the value provided                      | 2     |
+| max_value      | Numeric | Numeric       | Checks if input is less than the value provided                         | 2     |
+| regex          | String  | Regex         | Checks if input matches the supplied regex                              | 1     |
+| compiled_regex | String  | String        | Checks if input matches a regex specified in a struct validator         | 1     |
+
+Notes:
+
+1. Requires the `lazy_static` and `regex` crates as dependencies
+2. Can be any numeric type (integer/float) but type must match the field being checked!
 
 ### Example
 
