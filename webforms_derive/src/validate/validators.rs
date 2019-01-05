@@ -9,31 +9,45 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
     let name = &info.field.ident;
     let mut stream = proc_macro2::TokenStream::new();
     for attr in &info.attrs {
+        let field = match info.optional {
+            true => quote! {
+                opt
+            },
+            false => quote! {
+                self.#name
+            },
+        };
+
+        let refs = match info.optional {
+            true => quote! {&},
+            false => quote! {},
+        };
+
         stream.extend(match attr {
             ValidateType::StringMin(min) => {
                 quote! {
-                    if self.#name.len() < #min {
+                    if #field.len() < #min {
                         v.push(ValidateError::InputTooShort { field: stringify!(#name), min: #min });
                     }
                 }
             },
             ValidateType::StringMax(max) => {
                 quote! {
-                    if self.#name.len() > #max {
+                    if #field.len() > #max {
                         v.push(ValidateError::InputTooLong { field: stringify!(#name), max: #max });
                     }
                 }
             },
             ValidateType::ValueMin(min) => {
                 quote! {
-                    if self.#name < #min {
+                    if #field < #refs #min {
                         v.push(ValidateError::TooSmall { field: stringify!(#name), min: #min });
                     }
                 }
             },
             ValidateType::ValueMax(max) => {
                 quote! {
-                    if self.#name > #max {
+                    if #field > #refs #max {
                         v.push(ValidateError::TooLarge { field: stringify!(#name), max: #max });
                     }
                 }
@@ -41,7 +55,7 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
             ValidateType::Regex(id) => {
                 let rid = syn::Ident::new(&id, Span::call_site());
                 quote! {
-                    if !#rid.is_match(&self.#name) {
+                    if !#rid.is_match(&#field) {
                         v.push(ValidateError::InvalidRegex { field: stringify!(#name) })
                     }
                 }
@@ -49,7 +63,7 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
             ValidateType::Email(id) => {
                 let rid = syn::Ident::new(&id, Span::call_site());
                 quote! {
-                    if !#rid.is_match(&self.#name) {
+                    if !#rid.is_match(&#field) {
                         v.push(ValidateError::InvalidEmail { field: stringify!(#name) })
                     }
                 }
@@ -57,7 +71,7 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
             ValidateType::Phone(id) => {
                 let rid = syn::Ident::new(&id, Span::call_site());
                 quote! {
-                    if !#rid.is_match(&self.#name) {
+                    if !#rid.is_match(&#field) {
                         v.push(ValidateError::InvalidPhoneNumber { field: stringify!(#name) })
                     }
                 }
@@ -67,8 +81,8 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
 
     tokens.extend(match info.optional {
         true => quote! {
-            match #name {
-                Some(s) => {#stream},
+            match self.#name.as_ref() {
+                Some(opt) => {#stream},
                 None => {},
             }
         },

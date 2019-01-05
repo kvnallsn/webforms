@@ -94,7 +94,7 @@ mod tests {
     use regex::Regex;
 
     #[derive(ValidateForm)]
-    #[validate_regex(compiled_re = r"^compiled$")]
+    #[validate_regex(compiled_re = r"^100 Mike Rd$")]
     struct TestForm<'a> {
         #[validate(min_length = 3)]
         #[validate(max_length = 20)]
@@ -113,18 +113,42 @@ mod tests {
         #[validate(max_value = 65)]
         pub age: i16,
 
+        #[validate(compiled_regex = "compiled_re")]
+        pub address: &'a str,
+
+        #[validate(optional)]
+        #[validate(min_value = 50)]
         pub opt_number: Option<i16>,
+
+        #[validate(optional)]
+        #[validate(min_length = 5)]
+        pub opt_owned_string: Option<String>,
+
+        #[validate(optional)]
+        #[validate(min_length = 5)]
+        pub opt_ref_string: Option<&'a str>,
+    }
+
+    impl<'a> Default for TestForm<'a> {
+        fn default() -> Self {
+            TestForm {
+                username: "Mike",
+                email: "mike@test.com",
+                some_string: "password123!",
+                phone: "+1 111-111-1111",
+                age: 25,
+                address: "100 Mike Rd",
+                opt_number: Some(90),
+                opt_owned_string: Some("Maryland".to_owned()),
+                opt_ref_string: Some("Maryland"),
+            }
+        }
     }
 
     #[test]
     fn test_all_valid() {
         let form = TestForm {
-            username: "mike",
-            email: "test@test.com",
-            some_string: "password123!",
-            phone: "+1 111-111-1111",
-            age: 25,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -135,11 +159,7 @@ mod tests {
     fn test_username_too_short() {
         let form = TestForm {
             username: "a",
-            email: "test@test.com",
-            some_string: "password123!",
-            phone: "+1 111-111-1111",
-            age: 25,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -157,11 +177,7 @@ mod tests {
     fn test_username_too_long() {
         let form = TestForm {
             username: "aaaaa aaaaa aaaaa aaaaa",
-            email: "test@test.com",
-            some_string: "password123!",
-            phone: "+1 111-111-1111",
-            age: 25,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -178,12 +194,8 @@ mod tests {
     #[test]
     fn test_invalid_email() {
         let form = TestForm {
-            username: "mike",
             email: "test@test",
-            some_string: "password123!",
-            phone: "+1 111-111-1111",
-            age: 25,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -200,12 +212,8 @@ mod tests {
     #[test]
     fn test_invalid_some_string() {
         let form = TestForm {
-            username: "mike",
-            email: "test@test.com",
             some_string: "password123",
-            phone: "+1 111-111-1111",
-            age: 25,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -222,12 +230,8 @@ mod tests {
     #[test]
     fn test_invalid_phone() {
         let form = TestForm {
-            username: "mike",
-            email: "test@test.com",
-            some_string: "password123!",
             phone: "1-111-1111",
-            age: 25,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -244,12 +248,8 @@ mod tests {
     #[test]
     fn test_age_too_small() {
         let form = TestForm {
-            username: "mike",
-            email: "test@test.com",
-            some_string: "password123!",
-            phone: "+1 111-111-1111",
             age: 10,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -266,12 +266,8 @@ mod tests {
     #[test]
     fn test_age_too_large() {
         let form = TestForm {
-            username: "mike",
-            email: "test@test.com",
-            some_string: "password123!",
-            phone: "+1 111-111-1111",
             age: 70,
-            opt_number: None,
+            ..Default::default()
         };
 
         let res = form.validate();
@@ -282,6 +278,35 @@ mod tests {
         match errs[0] {
             ValidateError::TooLarge { field: _, max: _ } => {}
             _ => panic!("Wrong Error for Too Large"),
+        }
+    }
+
+    #[test]
+    fn test_optional_none() {
+        let form = TestForm {
+            opt_number: None,
+            ..Default::default()
+        };
+
+        let res = form.validate();
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_optional_some_too_low() {
+        let form = TestForm {
+            opt_number: Some(10),
+            ..Default::default()
+        };
+
+        let res = form.validate();
+        assert!(res.is_err());
+        let errs = res.unwrap_err();
+        assert_eq!(errs.len(), 1);
+
+        match errs[0] {
+            ValidateError::TooSmall { field: _, min: _ } => {}
+            _ => panic!("Wrong Error for Too Small"),
         }
     }
 }
