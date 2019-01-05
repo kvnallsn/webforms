@@ -76,6 +76,9 @@ pub enum ValidateError {
 
     /// The field failed the user-passed regex
     InvalidRegex { field: &'static str },
+
+    /// Two fields do not match
+    FieldMismatch { field: &'static str },
 }
 
 /// Validates a form according to attributes set via #[validate] attribute
@@ -106,6 +109,9 @@ mod tests {
         #[validate(regex = r"^[a-z]{8}\d{3}!$")]
         pub some_string: &'a str,
 
+        #[validate_match(some_string)]
+        pub some_string_2: &'a str,
+
         #[validate(phone)]
         pub phone: &'a str,
 
@@ -135,6 +141,7 @@ mod tests {
                 username: "Mike",
                 email: "mike@test.com",
                 some_string: "password123!",
+                some_string_2: "password123!",
                 phone: "+1 111-111-1111",
                 age: 25,
                 address: "100 Mike Rd",
@@ -213,6 +220,7 @@ mod tests {
     fn test_invalid_some_string() {
         let form = TestForm {
             some_string: "password123",
+            some_string_2: "password123",
             ..Default::default()
         };
 
@@ -224,6 +232,24 @@ mod tests {
         match errs[0] {
             ValidateError::InvalidRegex { field: _ } => {}
             _ => panic!("Wrong Error for Invalid Regex"),
+        }
+    }
+
+    #[test]
+    fn test_invalid_some_string_mismatch() {
+        let form = TestForm {
+            some_string_2: "wrong_field",
+            ..Default::default()
+        };
+
+        let res = form.validate();
+        assert!(res.is_err());
+        let errs = res.unwrap_err();
+        assert_eq!(errs.len(), 1);
+
+        match errs[0] {
+            ValidateError::FieldMismatch { field: _ } => {}
+            _ => panic!("Wrong Error for Field Mismatch"),
         }
     }
 

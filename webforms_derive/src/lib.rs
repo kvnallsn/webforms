@@ -42,7 +42,7 @@ use syn;
 ///     pub email: String,
 /// }
 /// ```
-#[proc_macro_derive(ValidateForm, attributes(validate, validate_regex))]
+#[proc_macro_derive(ValidateForm, attributes(validate, validate_regex, validate_match))]
 pub fn validate_macro_derive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput =
         syn::parse(input).expect("failed to parse ValidateForm macro input");

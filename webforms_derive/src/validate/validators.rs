@@ -75,6 +75,13 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
                         v.push(ValidateError::InvalidPhoneNumber { field: stringify!(#name) })
                     }
                 }
+            },
+            ValidateType::Match(ident) => {
+                quote! {
+                    if #field != self.#ident {
+                        v.push(ValidateError::FieldMismatch { field: stringify!(#name) })
+                    }
+                }
             }
         });
     }

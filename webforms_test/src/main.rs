@@ -13,6 +13,9 @@ struct LoginForm<'a> {
     #[validate(min_length = 8)]
     pub password: &'a str,
 
+    #[validate_match(password)]
+    pub password2: &'a str,
+
     #[validate(email)]
     pub email: &'a str,
 
@@ -24,6 +27,7 @@ fn main() {
     let form = LoginForm {
         username: "mike",
         password: "a",
+        password2: "aa",
         email: "mike@mail.com",
         age: 17,
     };

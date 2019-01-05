@@ -19,6 +19,7 @@ pub(crate) enum ValidateType {
     Regex(String),
     Email(String),
     Phone(String),
+    Match(syn::Ident),
 }
 
 /// Container for a given validation field and all
@@ -138,6 +139,13 @@ impl<'a> ValidateStruct<'a> {
                         .parse_meta()
                         .expect("Failed to parse webform validate attribute");
                     info.parse_validate_attribute(meta, self);
+                } else if attr.path.is_ident("validate_match") {
+                    let meta = &attr
+                        .parse_meta()
+                        .expect("Failed to parse webform validate attribute");
+                    info.parse_validate_match_attribute(meta);
+                } else if attr.path.is_ident("validat") {
+
                 }
             }
 
@@ -193,6 +201,23 @@ impl<'a> ValidateField<'a> {
             field: field,
             attrs: vec![],
             optional: false,
+        }
+    }
+
+    fn parse_validate_match_attribute(&mut self, meta: &syn::Meta) {
+        match meta {
+            syn::Meta::Word(ref w) => {
+                self.attrs.push(ValidateType::Match(w.clone()));
+            },
+            syn::Meta::List(ref list) => {
+                for nested in list.nested.iter() {
+                    match nested {
+                        syn::NestedMeta::Meta(m) => self.parse_validate_match_attribute(m),
+                        _ => panic!(""),
+                    }
+                }
+            },
+            _ => panic!("")
         }
     }
 
@@ -286,10 +311,10 @@ impl<'a> ValidateField<'a> {
                                 panic!("compiled_regex requires a pre-compiled regex via a `validate_regex` struct attribute");
                             }
                         }
-                        _ => panic!("compiled_regex requires a string argumented"),
+                        _ => panic!("compiled_regex requires a string argumente"),
                     }
                 } else {
-                    println!("Unknown ident: {}", nv.ident.to_string());
+                    println!("Unknown attribute: {}", nv.ident.to_string());
                 }
             }
         }
