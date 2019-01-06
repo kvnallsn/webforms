@@ -119,7 +119,7 @@ mod tests {
         #[validate(max_value = 65)]
         pub age: i16,
 
-        #[validate(compiled_regex = "compiled_re")]
+        #[validate_regex(compiled_re)]
         pub address: &'a str,
 
         #[validate(optional)]

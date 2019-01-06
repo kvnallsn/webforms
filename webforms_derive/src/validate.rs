@@ -19,6 +19,7 @@ pub(crate) enum ValidateType {
     Regex(String),
     Email(String),
     Phone(String),
+    CompiledRegex(syn::Ident),
     Match(syn::Ident),
 }
 
@@ -144,8 +145,11 @@ impl<'a> ValidateStruct<'a> {
                         .parse_meta()
                         .expect("Failed to parse webform validate attribute");
                     info.parse_validate_match_attribute(meta);
-                } else if attr.path.is_ident("validat") {
-
+                } else if attr.path.is_ident("validate_regex") {
+                    let meta = &attr
+                        .parse_meta()
+                        .expect("Failed to parse webform validate attribute");
+                    info.parse_validate_regex_attribute(meta, self);
                 }
             }
 
@@ -213,6 +217,27 @@ impl<'a> ValidateField<'a> {
                 for nested in list.nested.iter() {
                     match nested {
                         syn::NestedMeta::Meta(m) => self.parse_validate_match_attribute(m),
+                        _ => panic!(""),
+                    }
+                }
+            },
+            _ => panic!("")
+        }
+    }
+
+    fn parse_validate_regex_attribute(&mut self, meta: &syn::Meta, struct_info: &mut ValidateStruct<'a>) {
+        match meta {
+            syn::Meta::Word(ref w) => {
+                if struct_info.regex_tokens.contains_key(&w.to_string()) {
+                    self.attrs.push(ValidateType::CompiledRegex(w.clone()));
+                } else {
+                    panic!("#[validate_regex] (field) requires a corresponding #[validate_regex] on the struct");
+                }
+            },
+            syn::Meta::List(ref list) => {
+                for nested in list.nested.iter() {
+                    match nested {
+                        syn::NestedMeta::Meta(m) => self.parse_validate_regex_attribute(m, struct_info),
                         _ => panic!(""),
                     }
                 }

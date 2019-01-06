@@ -82,6 +82,13 @@ pub(crate) fn write(info: &ValidateField, tokens: &mut proc_macro2::TokenStream)
                         v.push(ValidateError::FieldMismatch { field: stringify!(#name) })
                     }
                 }
+            },
+            ValidateType::CompiledRegex(ident) => {
+                quote! {
+                    if !#ident.is_match(&#field) {
+                        v.push(ValidateError::InvalidRegex { field: stringify!(#name) })
+                    }
+                }
             }
         });
     }
