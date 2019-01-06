@@ -27,6 +27,8 @@ To add form validation to a struct, implement or derive the ValidateForm trait. 
 
 #### `#[validate_regex(...)]`
 
+The `#[validate_regex(...)]` struct attribute accepts a key-value pair, where the key is an identifier that can later be used with the `#[validate_regex(...)]` field attributes and the value is a regex expression.
+
 | Validator    | Type  | Argument Type | Description                                            | Notes |
 | ------------ | ----- | ------------- | ------------------------------------------------------ | ----- |
 | *identifier* | Ident | Regex         | Creates an identifier that links to the regex provided | 1, 2  |
@@ -47,10 +49,10 @@ use webforms::validate::ValidateForm;
 #[validate_regex(pw_regex = r"^a_regex_string$")]
 struct RegisterForm {
     ...
-    #[validate(compiled_regex = "pw_regex")]
+    #[validate_regex(pw_regex)]
     pub password1: String,
 
-    #[validate(compiled_regex = "pw_regex")]
+    #[validate_regex(pw_regex)]
     pub password2: String,
     ...
 }
@@ -59,6 +61,8 @@ struct RegisterForm {
 ### Field Attributes
 
 #### `#[validate(...)]`
+
+The `#[validate(...)]` attribute accepts either a pre-defined validator (e.g., `email`) or a key-value pair (e.g., `min_length`) where the key represents what to validate and the value represents the validation critera.  See the table below for all currently implemented validators.
 
 | Validator    | Type    | Argument Type | Description                                                             | Notes |
 | ------------ | ------- | ------------- | ----------------------------------------------------------------------- | ----- |
@@ -77,13 +81,19 @@ Notes:
 
 #### `#[validate_match(...)]`
 
+The `#[validate_match(...)]` attribute accepts the name of another field in the struct.  It ensures this field matches exactly
+the field specified in the attribue.
+
 | Argument | Type     | Argument Type   | Description                                                       | Notes |
 | -------- | -------- | --------------- | ----------------------------------------------------------------- | ----- |
-| *field*  | *Varies* | Field in Struct | Checks if this field matches the value specified in another field | 1     |
+| *field*  | *Varies* | Field in Struct | Checks if this field matches the value specified in another field | 1, 2  |
 
 1. Type can vary, but must exactly match the field indicated in the attribute
+2. Types must implement `PartialEq` for comparison
 
 #### `#[validate_regex(...)]` (Field)
+
+The `#[validate_regex(...)`] attribute accepts an identifier previously specified in a `#[validate_regex(...)`] applied to the struct.  It allows a regex to be defined early and used numerous times throughout the struct with being redefined or compiled.
 
 | Argument | Type   | Argument Type | Description                                                                     | Notes |
 | -------- | ------ | ------------- | ------------------------------------------------------------------------------- | ----- |
