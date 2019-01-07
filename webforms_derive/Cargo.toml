@@ -3,6 +3,11 @@ name = "webforms_derive"
 version = "0.2.1"
 authors = ["Kevin Allison <kvnallsn@gmail.com>"]
 edition = "2018"
+description = "Proc-Macro derive implementation for WebForms.  Should not depend on this crate, should depend on webforms instead"
+repository = "https://github.com/kvnallsn/webforms"
+license = "MIT"
+keywords = ["web", "form", "html", "validate"]
+categories = ["web-programming"]
 
 [lib]
 proc-macro = true
