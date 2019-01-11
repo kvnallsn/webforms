@@ -47,10 +47,11 @@
 //! }
 //! ```
 
-/// Import and re-export the macro
+use std::fmt::{self, Display};
+// Import and re-export the macro
 pub use webforms_derive::ValidateForm;
 
-/// Errors that can appear if validation fails
+// Errors that can appear if validation fails
 #[derive(Debug)]
 pub enum ValidateError {
     /// Input was too short (< min_length)
@@ -79,6 +80,45 @@ pub enum ValidateError {
 
     /// Two fields do not match
     FieldMismatch { field: &'static str },
+}
+
+impl Display for ValidateError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ValidateError::InputTooShort { field, min } => {
+                write!(f, "{}: input too short. ({} min length)", field, min)
+            }
+
+            ValidateError::InputTooLong { field, max } => {
+                write!(f, "{}: input too long. ({} max length)", field, max)
+            }
+            ValidateError::TooSmall { field, min } => write!(
+                f,
+                "{}: input below required minimum. ({} minimum)",
+                field, min
+            ),
+            ValidateError::TooLarge { field, max } => write!(
+                f,
+                "{}: input above maximum allowed. ({} maximum)",
+                field, max
+            ),
+            ValidateError::InvalidCharacters { field } => {
+                write!(f, "{}: contains invalid characters", field)
+            }
+            ValidateError::InvalidEmail { field } => {
+                write!(f, "{}: not a valid email address", field)
+            }
+            ValidateError::InvalidPhoneNumber { field } => {
+                write!(f, "{}: not a valid U.S. phone number", field)
+            }
+            ValidateError::InvalidRegex { field } => {
+                write!(f, "{}: does not match required input", field)
+            }
+            ValidateError::FieldMismatch { field } => {
+                write!(f, "{}: does not match other field", field)
+            }
+        }
+    }
 }
 
 /// Validates a form according to attributes set via #[validate] attribute

@@ -34,6 +34,10 @@ fn main() {
 
     match form.validate() {
         Ok(_) => println!("Validate Success!"),
-        Err(e) => println!("Errors: {:?}", e),
+        Err(errs) => {
+            for err in errs {
+                println!("{}", err);
+            }
+        }
     };
 }
