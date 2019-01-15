@@ -17,7 +17,7 @@ validate = []
 html = []
 
 [dependencies]
-webforms_derive = "0.2.1"
+webforms_derive = { path = "../webforms_derive" }
 
 [dev-dependencies]
 regex = "1.1.0"

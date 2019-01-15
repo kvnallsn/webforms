@@ -1,6 +1,7 @@
 //! Macro implementations for WebForms
 #![recursion_limit = "128"]
 
+mod html;
 mod validate;
 extern crate proc_macro;
 
@@ -48,4 +49,39 @@ pub fn validate_macro_derive(input: TokenStream) -> TokenStream {
         syn::parse(input).expect("failed to parse ValidateForm macro input");
 
     validate::impl_validate_macro(ast)
+}
+
+/// Derives the HtmlForm trait for a given struct
+///
+/// Will generate valid and complient HTML for a struct that can be used
+/// with various templating languages (Tera, Askama, etc) to render forms
+/// onto webpages
+#[proc_macro_derive(HtmlForm, attributes(html, html_input_type, html_form, html_submit))]
+pub fn html_macro_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).expect("failed to parse HtmlForm macro input");
+
+    html::impl_html_macro(ast)
+}
+
+pub(crate) fn parse_attribute_list<F>(attr: &syn::Attribute, mut f: F)
+where
+    F: FnMut(&syn::Meta),
+{
+    let meta = attr
+        .parse_meta()
+        .expect("HtmlForm - failed to parse html attribue for field");
+
+    let list = match meta {
+        syn::Meta::List(ref list) => list,
+        _ => panic!("HtmlForm - failed to parse html_type attribute for field (meta)"),
+    };
+
+    for attr in list.nested.iter() {
+        let attr = match attr {
+            syn::NestedMeta::Meta(m) => m,
+            _ => panic!("WebForms"),
+        };
+
+        f(attr);
+    }
 }

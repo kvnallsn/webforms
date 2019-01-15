@@ -12,3 +12,6 @@
 
 #[cfg(feature = "validate")]
 pub mod validate;
+
+#[cfg(feature = "html")]
+pub mod html;

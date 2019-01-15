@@ -1,13 +1,20 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use webforms::validate::{ValidateError, ValidateForm};
+use webforms::{
+    html::HtmlForm,
+    validate::{ValidateError, ValidateForm},
+};
 
-#[derive(ValidateForm)]
+#[derive(ValidateForm, HtmlForm)]
 #[validate_regex(user_re = r"^mark$")]
+#[html_form(method = "POST", action = "#", class = 2)]
+#[html_submit(class = "btn", value = "Next")]
 struct LoginForm<'a> {
     #[validate(min_length = 3)]
     #[validate(max_length = 10)]
     #[validate(compiled_regex = "user_re")]
+    #[html(class = "input-textfield", placeholder = "Username", required)]
+    #[html_input_type(password)]
     pub username: &'a str,
 
     #[validate(min_length = 8)]
@@ -32,6 +39,8 @@ fn main() {
         age: 17,
     };
 
+    println!("\n-------- VALIDATE TEST ----------\n");
+
     match form.validate() {
         Ok(_) => println!("Validate Success!"),
         Err(errs) => {
@@ -40,4 +49,8 @@ fn main() {
             }
         }
     };
+
+    println!("\n---------- HTML TEST ------------\n");
+
+    println!("{}", form.render_form());
 }
