@@ -4,25 +4,10 @@ use crate::proc_macro::TokenStream;
 use quote::quote;
 use syn;
 
-macro_rules! attribute_list {
-    ($attr:expr) => {{
-        let meta = $attr
-            .parse_meta()
-            .expect("HtmlForm - failed to parse html attribue for field");
-
-        match meta {
-            syn::Meta::List(ref list) => list.clone(),
-            _ => panic!("HtmlForm - failed to parse html_type attribute for field (meta)"),
-        }
-    }};
-}
-
 mod html_field;
-mod html_field_attribute;
 mod html_struct;
 
 pub(crate) use self::html_field::HtmlField;
-pub(crate) use self::html_field_attribute::HtmlFieldAttribute;
 pub(crate) use self::html_struct::HtmlStruct;
 
 /// Implementation for the HtmlForm macro
@@ -38,7 +23,7 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
                 "".to_owned()
             }
 
-            fn render_form(&self) -> String {
+            fn render_form(&self) -> &'static str {
                 #st
             }
         }

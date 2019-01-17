@@ -2,6 +2,7 @@
 
 use crate::{html::HtmlField, parse_attribute_list};
 use quote::{quote, ToTokens};
+use std::io::Write;
 
 pub(crate) struct HtmlStruct {
     pub name: String,
@@ -29,7 +30,7 @@ impl HtmlStruct {
     /// # Arguments
     ///
     /// * `ast` - The abstract syntax tree to parse
-    pub fn parse(&mut self, ast: &syn::DeriveInput) {
+    fn parse(&mut self, ast: &syn::DeriveInput) {
         self.parse_struct_attributes(ast);
         self.parse_fields(ast);
     }
@@ -43,7 +44,7 @@ impl HtmlStruct {
     fn parse_struct_attributes(&mut self, ast: &syn::DeriveInput) {
         for attr in &ast.attrs {
             if attr.path.is_ident("html_form") {
-                let mut form_field = HtmlField::tag("form", self.name.clone());
+                let mut form_field = HtmlField::tag("form");
                 parse_attribute_list(attr, |meta| match meta {
                     syn::Meta::NameValue(ref nv) => {
                         form_field.parse_pair_attribute(nv.ident.to_string(), &nv.lit)
@@ -52,8 +53,8 @@ impl HtmlStruct {
                 });
                 self.form = form_field;
             } else if attr.path.is_ident("html_submit") {
-                let mut submit_field = HtmlField::tag("input", "submit");
-                submit_field.add_pair_attribute::<&str, &str>("type", "submit");
+                let mut submit_field = HtmlField::tag("input");
+                submit_field.add_pair_attribute("type", "submit");
                 parse_attribute_list(attr, |meta| match meta {
                     syn::Meta::NameValue(ref nv) => {
                         submit_field.parse_pair_attribute(nv.ident.to_string(), &nv.lit)
@@ -81,21 +82,26 @@ impl HtmlStruct {
             .map(|field| HtmlField::parse(&field))
             .collect();
     }
+
+    fn write(&self) -> String {
+        let mut w = Vec::new();
+        self.form.write(&mut w, true, false);
+        self.fields.iter().for_each(|field| {
+            field.write(&mut w, true, true);
+        });
+        self.sumbit.write(&mut w, true, true);
+        write!(&mut w, "</form>").unwrap();
+
+        let s = std::str::from_utf8(&w).unwrap();
+        s.to_owned()
+    }
 }
 
 impl ToTokens for HtmlStruct {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let form = &self.form;
-        let fields = &self.fields;
-        let submit = &self.sumbit;
-        let mut fmt = "{}\n".to_owned();
-        for _ in 0..fields.len() {
-            fmt.push_str("\t{}\n");
-        }
-        fmt.push_str("\t{}\n</form>");
-
+        let s = self.write();
         tokens.extend(quote! {
-            format!(#fmt, #form, #(#fields),*, #submit)
+            #s
         })
     }
 }

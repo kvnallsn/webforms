@@ -20,5 +20,5 @@ pub trait HtmlForm {
     fn render_field<S: AsRef<str>>(&self, field: S) -> String;
 
     /// Renders the whole form at once according to all the attribute tags provided
-    fn render_form(&self) -> String;
+    fn render_form(&self) -> &'static str;
 }
