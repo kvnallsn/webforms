@@ -1,3 +1,4 @@
+use askama::Template;
 use lazy_static::lazy_static;
 use regex::Regex;
 use webforms::{
@@ -30,6 +31,13 @@ struct LoginForm<'a> {
     pub age: i32,
 }
 
+#[derive(Template)]
+#[template(path = "hello.html")]
+struct HelloTemplate<'a> {
+    pub name: &'a str,
+    pub form: &'a LoginForm<'a>,
+}
+
 fn main() {
     let form = LoginForm {
         username: "mike",
@@ -53,4 +61,12 @@ fn main() {
     println!("\n---------- HTML TEST ------------\n");
 
     println!("{}", form.render_form());
+
+    println!("\n--------- RENDER TEST -----------\n");
+
+    let hello = HelloTemplate {
+        name: "WebForms",
+        form: &form,
+    };
+    println!("{}", hello.render().unwrap());
 }

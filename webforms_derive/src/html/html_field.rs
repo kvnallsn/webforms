@@ -148,27 +148,27 @@ impl HtmlField {
     /// * `w` - Vector of u8's to write to
     /// * `newline` - True to print a newline character after the tag
     /// * `indent` - True to indent (via a tab) this field
-    pub fn write(&self, w: &mut Vec<u8>, newline: bool, indent: bool) {
+    pub fn write(&self, writer: &mut std::io::Write, newline: bool, indent: bool) {
         if indent {
-            write!(w, "\t").unwrap();
+            write!(writer, "\t").unwrap();
         }
 
-        write!(w, "<{}", &self.tag).unwrap();
+        write!(writer, "<{}", &self.tag).unwrap();
         if let Some(name) = &self.name {
-            write!(w, " name='{}'", name).unwrap();
+            write!(writer, " name='{}'", name).unwrap();
         }
 
         self.pair_attrs
             .iter()
-            .for_each(|(attr, value)| write!(w, " {}='{}'", attr, value).unwrap());
+            .for_each(|(attr, value)| write!(writer, " {}='{}'", attr, value).unwrap());
 
         self.value_attrs
             .iter()
-            .for_each(|value| write!(w, " {}", value).unwrap());
+            .for_each(|value| write!(writer, " {}", value).unwrap());
 
-        write!(w, ">").unwrap();
+        write!(writer, ">").unwrap();
         if newline {
-            write!(w, "\n").unwrap();
+            write!(writer, "\n").unwrap();
         }
     }
 }

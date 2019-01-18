@@ -1,0 +1,8 @@
+[form]
+class = "form"
+
+[input]
+class = "input"
+
+[input.submit]
+class = "btn btn-small"
