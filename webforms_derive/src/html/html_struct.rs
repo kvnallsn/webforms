@@ -83,7 +83,7 @@ impl HtmlStruct {
             .collect();
     }
 
-    fn write(&self) -> String {
+    pub fn write(&self) -> String {
         let mut w: Vec<u8> = Vec::new();
         self.form.write(&mut w, true, false);
         self.fields.iter().for_each(|field| {

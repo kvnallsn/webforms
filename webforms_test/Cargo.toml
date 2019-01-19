@@ -5,7 +5,7 @@ authors = ["Kevin Allison <kvnallsn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-askama = "0.7.2"
+askama = "0.8.0"
 webforms = { path = "../webforms" }
 regex = "1"
 lazy_static = "1.2.0"

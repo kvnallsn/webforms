@@ -6,19 +6,38 @@
 // Import and re-export the macro
 pub use webforms_derive::HtmlForm;
 
+#[macro_export]
+macro_rules! attrs {
+    ($($v:expr)+) => {{
+        let mut h: std::collections::HashSet<::webforms::html::HtmlAttribute> = std::collections::HashSet::new();
+        $(h.insert(::webforms::html::HtmlAttribute::new_single($v));)+
+        h
+    }};
+    ($($k:expr => $v:expr),+) => {{
+        let mut h: std::collections::HashSet<::webforms::html::HtmlAttribute> = std::collections::HashSet::new();
+        $(h.insert(::webforms::html::HtmlAttribute::new_pair($k, $v));)+
+        h
+    }};
+    ($($k:expr => $v:expr),+; $($single:expr),+) => {{
+        let mut h: std::collections::HashSet<::webforms::html::HtmlAttribute> = std::collections::HashSet::new();
+        $(h.insert(::webforms::html::HtmlAttribute::new_pair($k, $v));)+
+        $(h.insert(::webforms::html::HtmlAttribute::new_single($single));)+
+        h
+    }};
+}
+
+mod html_attribute;
+mod html_field;
+mod html_form_builder;
+
+pub use self::html_attribute::HtmlAttribute;
+pub use self::html_field::HtmlFieldBuilder;
+pub use self::html_form_builder::HtmlFormBuilder;
+
 /// HtmlForm provides two methods, render_field and render_form. Both provide
 /// different ways to accomplish the same goal, rendering a form as valid and safe
 /// HTML.
 pub trait HtmlForm {
-    /// Renders the specified field and nothing else.  Useful if you want to
-    /// split the form up accross different HTML tags (like divs, etc) or want
-    /// more control over how the form renders
-    ///
-    /// # Arguments
-    ///
-    /// * `field` - Name of field to render
-    fn render_field<S: AsRef<str>>(&self, field: S) -> String;
-
-    /// Renders the whole form at once according to all the attribute tags provided
-    fn render_form(&self) -> &'static str;
+    /// Return the HTML form of this form
+    fn form(&self) -> HtmlFormBuilder;
 }

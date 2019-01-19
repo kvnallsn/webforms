@@ -17,3 +17,7 @@ rand = "0.6"
 syn = { version = "0.15.23", features = ["derive"] }
 quote = "0.6.10"
 proc-macro2 = "0.4"
+lazy_static = "1.2.0"
+toml = "0.4.10"
+serde = "1.0"
+serde_derive = "1.0"

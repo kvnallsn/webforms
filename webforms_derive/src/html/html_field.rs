@@ -175,26 +175,14 @@ impl HtmlField {
 
 impl ToTokens for HtmlField {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let mut w = Vec::new();
-
-        write!(&mut w, "<{}", &self.tag).unwrap();
-        if let Some(name) = &self.name {
-            write!(&mut w, " name='{}'", name).unwrap();
-        }
-
-        self.pair_attrs
-            .iter()
-            .for_each(|(attr, value)| write!(&mut w, " {}='{}'", attr, value).unwrap());
-
-        self.value_attrs
-            .iter()
-            .for_each(|value| write!(&mut w, " {}", value).unwrap());
-
-        write!(&mut w, ">").unwrap();
-        let s = std::str::from_utf8(&w).unwrap();
+        let tag = &self.tag;
+        let name = match self.name {
+            Some(ref n) => quote! { Some(#n) },
+            None => quote! { None },
+        };
 
         tokens.extend(quote! {
-            #s
-        });
+            ::webforms::html::HtmlFieldBuilder::new(#tag, #name)
+        })
     }
 }

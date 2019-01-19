@@ -63,6 +63,13 @@ pub fn html_macro_derive(input: TokenStream) -> TokenStream {
     html::impl_html_macro(ast)
 }
 
+/// Parses an attribute list in the form #[attribute(list)] and applies the given
+/// function to nested meta attributes
+///
+/// # Arguments
+///
+/// * `attr` - Attribute to parse
+/// * `f` - Function to run over extracted meta arguments
 pub(crate) fn parse_attribute_list<F>(attr: &syn::Attribute, mut f: F)
 where
     F: FnMut(&syn::Meta),

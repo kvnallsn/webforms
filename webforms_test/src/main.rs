@@ -2,7 +2,8 @@ use askama::Template;
 use lazy_static::lazy_static;
 use regex::Regex;
 use webforms::{
-    html::HtmlForm,
+    attrs,
+    html::{HtmlForm, HtmlFormBuilder},
     validate::{ValidateError, ValidateForm},
 };
 
@@ -35,7 +36,7 @@ struct LoginForm<'a> {
 #[template(path = "hello.html")]
 struct HelloTemplate<'a> {
     pub name: &'a str,
-    pub form: &'a LoginForm<'a>,
+    pub form: HtmlFormBuilder,
 }
 
 fn main() {
@@ -60,13 +61,16 @@ fn main() {
 
     println!("\n---------- HTML TEST ------------\n");
 
-    println!("{}", form.render_form());
+    let f = form.form();
+    //f.field_mut("username").attrs(attrs!("class" => "input-text"));
+    let f2 = f.field("username").build(attrs!("class" => "input-text"));
+    println!("{}", f2);
 
     println!("\n--------- RENDER TEST -----------\n");
-
-    let hello = HelloTemplate {
-        name: "WebForms",
-        form: &form,
+    let template = HelloTemplate {
+        name: "WebForm",
+        form: form.form(),
     };
-    println!("{}", hello.render().unwrap());
+
+    println!("{}", template.render().unwrap());
 }

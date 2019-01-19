@@ -1,8 +1,9 @@
-[form]
-class = "form"
+[tags]
+    [tags.form]
+    class = "form"
 
-[input]
-class = "input"
+    [tags.input]
+    class = "input"
 
-[input.submit]
-class = "btn btn-small"
+    [tags.input-submit]
+    class = "btn btn-small"

@@ -5,3 +5,9 @@ members = [
     "webforms_derive",
     "webforms_test",
 ]
+
+[patch.crates-io]
+askama = { git = 'https://github.com/djc/askama' }
+askama_derive = { git = 'https://github.com/djc/askama' }
+askama_escape = { git = 'https://github.com/djc/askama' }
+askama_shared = { git = 'https://github.com/djc/askama' }

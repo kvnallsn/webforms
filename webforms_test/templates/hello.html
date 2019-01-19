@@ -4,7 +4,9 @@
 
 <body>
     Hello, {{ name }}!
-    {{ form.render_form()|safe }}
+    <form>
+        {{ form.field("username").build(attrs!("class" => "input-text"; "required"))|safe }}
+    </form>
 </body>
 
 </html>
