@@ -83,15 +83,16 @@ impl<'a> std::fmt::Display for HtmlField<'a> {
 
         // Write the attributes out, if there is a collision between the default
         // set and the specified set, pick the specified set
-        self.attrs.iter().for_each(|attr| {
+        for attr in self.attrs {
             if !self.late_attrs.contains(attr) {
-                write!(f, " {}", attr).unwrap();
+                write!(f, " {}", attr)?;
             }
-        });
+        }
 
-        self.late_attrs
-            .iter()
-            .for_each(|attr| write!(f, " {}", attr).unwrap());
+        for attr in &self.late_attrs {
+            write!(f, " {}", attr)?;
+        }
+
         write!(f, ">")
     }
 }
