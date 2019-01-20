@@ -8,6 +8,7 @@ pub use webforms_derive::HtmlForm;
 
 #[macro_export]
 macro_rules! attrs {
+    () => { std::collections::HashSet::new() };
     ($($v:expr)+) => {{
         let mut h: std::collections::HashSet<::webforms::html::HtmlAttribute> = std::collections::HashSet::new();
         $(h.insert(::webforms::html::HtmlAttribute::new_single($v));)+
@@ -31,7 +32,7 @@ mod html_field;
 mod html_form_builder;
 
 pub use self::html_attribute::HtmlAttribute;
-pub use self::html_field::HtmlFieldBuilder;
+pub use self::html_field::{HtmlField, HtmlFieldBuilder};
 pub use self::html_form_builder::HtmlFormBuilder;
 
 /// HtmlForm provides two methods, render_field and render_form. Both provide

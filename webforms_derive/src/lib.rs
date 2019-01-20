@@ -92,3 +92,26 @@ where
         f(attr);
     }
 }
+
+/// Detects whether a type is wrapped in a Option<>. Returns true
+/// is the field is an option
+///
+/// # Arguments
+///
+/// * `type` - Type to determine if it's an option
+pub(crate) fn is_option(ty: &syn::Type) -> bool {
+    match ty {
+        syn::Type::Path(ref p) => {
+            let mut opt = false;
+            for segment in p.path.segments.iter() {
+                if segment.ident == "Option" {
+                    opt = true;
+                    break;
+                }
+            }
+            opt
+        }
+        syn::Type::Reference(ref r) => is_option(&r.elem),
+        _ => false,
+    }
+}

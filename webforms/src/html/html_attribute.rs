@@ -1,6 +1,8 @@
 //! Describes an Html Tag Attribtue
 
-#[derive(Clone, Debug, Eq, Hash)]
+use std::hash::{Hash, Hasher};
+
+#[derive(Clone, Debug, Eq)]
 pub enum HtmlAttribute {
     Single(String),
     Pair(String, String),
@@ -34,6 +36,15 @@ impl PartialEq for HtmlAttribute {
                 HtmlAttribute::Pair(ref n2, _) => n1 == n2,
                 _ => false,
             },
+        }
+    }
+}
+
+impl Hash for HtmlAttribute {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            HtmlAttribute::Single(ref v) => v.hash(state),
+            HtmlAttribute::Pair(ref a, _) => a.hash(state),
         }
     }
 }

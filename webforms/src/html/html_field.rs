@@ -14,7 +14,7 @@ pub struct HtmlField<'a> {
     pub tag: &'a str,
     pub name: &'a Option<String>,
     pub attrs: &'a HashSet<HtmlAttribute>,
-    pub late_attrs: HashSet<HtmlAttribute>,
+    pub late_attrs: Option<HashSet<HtmlAttribute>>,
 }
 
 impl HtmlFieldBuilder {
@@ -34,7 +34,27 @@ impl HtmlFieldBuilder {
         field
     }
 
-    pub fn build<'a>(&'a self, attrs: HashSet<HtmlAttribute>) -> HtmlField<'a> {
+    pub fn with_attrs<S: Into<String>, P: Into<String>>(
+        tag: S,
+        name: Option<P>,
+        attrs: HashSet<HtmlAttribute>,
+    ) -> Self {
+        let mut field = HtmlFieldBuilder {
+            tag: tag.into(),
+            name: name.map(|s| s.into()),
+            attrs: attrs,
+        };
+
+        if let Some(ref name) = field.name {
+            field
+                .attrs
+                .replace(HtmlAttribute::new_pair("name", name.to_string()));
+        }
+
+        field
+    }
+
+    pub fn build<'a>(&'a self, attrs: Option<HashSet<HtmlAttribute>>) -> HtmlField<'a> {
         HtmlField {
             tag: &self.tag,
             name: &self.name,
@@ -83,14 +103,23 @@ impl<'a> std::fmt::Display for HtmlField<'a> {
 
         // Write the attributes out, if there is a collision between the default
         // set and the specified set, pick the specified set
-        for attr in self.attrs {
-            if !self.late_attrs.contains(attr) {
-                write!(f, " {}", attr)?;
-            }
-        }
+        match self.late_attrs {
+            Some(ref late_attrs) => {
+                for attr in self.attrs {
+                    if !late_attrs.contains(attr) {
+                        write!(f, " {}", attr)?;
+                    }
+                }
 
-        for attr in &self.late_attrs {
-            write!(f, " {}", attr)?;
+                for attr in late_attrs {
+                    write!(f, " {}", attr)?;
+                }
+            }
+            None => {
+                for attr in self.attrs {
+                    write!(f, " {}", attr)?;
+                }
+            }
         }
 
         write!(f, ">")

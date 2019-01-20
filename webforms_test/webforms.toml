@@ -1,9 +1,2 @@
-[tags]
-    [tags.form]
-    class = "form"
-
-    [tags.input]
-    class = "input"
-
-    [tags.input-submit]
-    class = "btn btn-small"
+[classes]
+input-text = "input-text mr-2"

@@ -5,7 +5,11 @@
 <body>
     Hello, {{ name }}!
     <form>
-        {{ form.field("username").build(attrs!("class" => "input-text"; "required"))|safe }}
+        {{ form.field("username", attrs!("class" => "input-override"))|safe }}
+        {{ form.field("password", attrs!("class" => "input-password", "type" => "password"))|safe }}
+        {{ form.field("password2", attrs!("class" => "input-password", "type" => "password"))|safe }}
+        {{ form.field("email", attrs!("class" => "input-password", "type" => "email"))|safe }}
+        {{ form.field("age", attrs!())|safe }}
     </form>
 </body>
 

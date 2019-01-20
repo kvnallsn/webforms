@@ -18,7 +18,7 @@ pub struct HtmlDefault {
 
 #[derive(Deserialize, Debug)]
 pub struct TomlTest {
-    tags: BTreeMap<String, BTreeMap<String, String>>,
+    classes: BTreeMap<String, String>,
 }
 
 impl HtmlDefault {

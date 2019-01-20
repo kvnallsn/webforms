@@ -1,6 +1,6 @@
 //! Implemenation of the HtmlField container used when parsing a field in a struct with the #[derive(HtmlForm)] attribute
 
-use crate::parse_attribute_list;
+use crate::{html::html_input_type, is_option, parse_attribute_list};
 use quote::{quote, ToTokens};
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
@@ -53,9 +53,9 @@ impl HtmlField {
     /// # Arguments
     ///
     /// * `value` - Value of this attribute (e.g., "required")
-    pub fn add_value_attribute(&mut self, value: String) {
+    pub fn add_value_attribute<S: Into<String>>(&mut self, value: S) {
         //self.attrs.push(HtmlFieldAttribute::new_value(value));
-        self.value_attrs.insert(value);
+        self.value_attrs.insert(value.into());
     }
 
     /// Creates a new HtmlField by parsing all attributes attached to the field
@@ -66,6 +66,7 @@ impl HtmlField {
                 .as_ref()
                 .expect("HtmlForm - requires named fields")
                 .to_string(),
+            &field.ty,
         );
 
         for attr in &field.attrs {
@@ -121,9 +122,13 @@ impl HtmlField {
         HtmlField::new(tag)
     }
 
-    pub fn input<S: Into<String>>(name: S) -> HtmlField {
+    pub fn input<S: Into<String>>(name: S, ty: &syn::Type) -> HtmlField {
         let mut field = HtmlField::with_name("input", name);
-        field.add_pair_attribute("type", "text");
+        field.add_pair_attribute("type", html_input_type(ty));
+        if !is_option(ty) {
+            field.add_value_attribute("required");
+        }
+
         field
     }
 
@@ -180,9 +185,17 @@ impl ToTokens for HtmlField {
             Some(ref n) => quote! { Some(#n) },
             None => quote! { None },
         };
+        let pairs: Vec<_> = self
+            .pair_attrs
+            .iter()
+            .map(|(k, v)| {
+                quote! {#k => #v}
+            })
+            .collect();
 
-        tokens.extend(quote! {
-            ::webforms::html::HtmlFieldBuilder::new(#tag, #name)
-        })
+        tokens.extend(quote! {{
+            let attrs = ::webforms::attrs!(#(#pairs),*);
+            ::webforms::html::HtmlFieldBuilder::with_attrs(#tag, #name, attrs)
+        }})
     }
 }

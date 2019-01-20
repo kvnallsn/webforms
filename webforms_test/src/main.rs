@@ -6,6 +6,7 @@ use webforms::{
     html::{HtmlForm, HtmlFormBuilder},
     validate::{ValidateError, ValidateForm},
 };
+use std::{io::Write, fs::File};
 
 #[derive(ValidateForm, HtmlForm)]
 #[validate_regex(user_re = r"^mark$")]
@@ -16,7 +17,6 @@ struct LoginForm<'a> {
     #[validate(max_length = 10)]
     #[validate(compiled_regex = "user_re")]
     #[html(class = "input-textfield", placeholder = "Username", required)]
-    #[html_input_type(password)]
     pub username: &'a str,
 
     #[validate(min_length = 8)]
@@ -29,7 +29,8 @@ struct LoginForm<'a> {
     pub email: &'a str,
 
     #[validate(min_value = 18)]
-    pub age: i32,
+    #[validate(optional)]
+    pub age: Option<i32>,
 }
 
 #[derive(Template)]
@@ -45,7 +46,7 @@ fn main() {
         password: "a",
         password2: "aa",
         email: "mike@mail.com",
-        age: 17,
+        age: Some(17),
     };
 
     println!("\n-------- VALIDATE TEST ----------\n");
@@ -62,8 +63,9 @@ fn main() {
     println!("\n---------- HTML TEST ------------\n");
 
     let f = form.form();
-    //f.field_mut("username").attrs(attrs!("class" => "input-text"));
-    let f2 = f.field("username").build(attrs!("class" => "input-text"));
+    let f2 = f.field("username", &attrs!("class" => "input-override"));
+    println!("{}", f2);
+    let f2 = f.field("age", &attrs!("class" => "input-num"));
     println!("{}", f2);
 
     println!("\n--------- RENDER TEST -----------\n");
@@ -72,5 +74,6 @@ fn main() {
         form: form.form(),
     };
 
-    println!("{}", template.render().unwrap());
+    let mut fp = File::create("test.html").unwrap();
+    fp.write(template.render().unwrap().as_bytes()).unwrap();
 }
