@@ -9,14 +9,26 @@ pub enum HtmlAttribute {
 }
 
 impl HtmlAttribute {
+    /// Constructs a new single (value) attribute
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Value of this attribute (e.g. "required")
     pub fn new_single<S: Into<String>>(value: S) -> HtmlAttribute {
         HtmlAttribute::Single(value.into())
     }
 
+    /// Constructs a new pair attribute
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of attribute (e.g., "id")
+    /// * `value` - Value of attribute (e.g., "username")
     pub fn new_pair<S: Into<String>, P: Into<String>>(name: S, value: P) -> HtmlAttribute {
         HtmlAttribute::Pair(name.into(), value.into())
     }
 
+    /// Human readable form of this HtmlAttribute
     pub fn render(&self) -> String {
         match &self {
             HtmlAttribute::Single(ref val) => format!(" {}", val),
