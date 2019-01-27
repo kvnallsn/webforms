@@ -1,2 +1,5 @@
-[classes]
-input-text = "input-text mr-2"
+[tags]
+[tags.input]
+class = "input-text mr-2"
+
+[types]

@@ -4,29 +4,25 @@ use crate::is_option;
 use crate::proc_macro::TokenStream;
 use lazy_static::lazy_static;
 use quote::quote;
-use std::collections::HashSet;
 use syn;
 
 mod html_defaults;
 mod html_field;
 mod html_struct;
 
-use self::html_defaults::HtmlDefault;
+use self::html_defaults::HtmlDefaults;
 pub(crate) use self::html_field::HtmlField;
 pub(crate) use self::html_struct::HtmlStruct;
 
 /// Lazily load the default configurations, if they exist
 lazy_static! {
-    static ref HTML_DEFAULTS: HashSet<HtmlDefault> =
-        HtmlDefault::from_file("webforms_test/webforms.toml");
+    static ref HTML_DEFAULTS: HtmlDefaults = HtmlDefaults::from_file("webforms_test/webforms.toml");
 }
 
 /// Implementation for the HtmlForm macro
 pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let generics = &ast.generics;
-
-    //for _ in HTML_DEFAULTS.iter() {}
 
     let st = HtmlStruct::new(&ast);
 
@@ -39,7 +35,6 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
             None => "Unknown",
         })
         .collect();
-    let form_str = st.write();
 
     let gen = quote! {
         impl #generics ::webforms::html::HtmlForm for #name #generics {
@@ -85,8 +80,12 @@ pub(crate) fn html_input_type(ty: &syn::Type) -> &'static str {
     match ty {
         syn::Type::Path(ref p) => match p.path.segments.last() {
             Some(ref r) if opt => html_input_type_parse_opt(&r.value().arguments, "text"),
+            Some(ref r) if HTML_DEFAULTS.has_input_type(&r.value().ident) => {
+                HTML_DEFAULTS.get_input_type(&r.value().ident)
+            }
             Some(ref r) => {
                 let ty = &r.value().ident;
+
                 if ty == "i8"
                     || ty == "i16"
                     || ty == "i32"

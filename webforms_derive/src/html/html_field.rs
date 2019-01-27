@@ -3,7 +3,6 @@
 use crate::{html::html_input_type, is_option, parse_attribute_list};
 use quote::{quote, ToTokens};
 use std::collections::{HashMap, HashSet};
-use std::io::Write;
 
 pub(crate) struct HtmlField {
     pub tag: String,
@@ -137,7 +136,7 @@ impl HtmlField {
     /// # Arguments
     /// * `name` - Name of this form
     /// * `method` - What method to use (e.g, GET, POST) when submitting this form
-    pub fn form<S: Into<String>>(name: S) -> HtmlField {
+    pub fn form<S: Into<String>>(_name: S) -> HtmlField {
         HtmlField::tag("form")
     }
 
