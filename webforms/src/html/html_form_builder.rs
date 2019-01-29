@@ -1,8 +1,8 @@
 //! Module to build HtmlForms
 
-use crate::html::{HtmlAttribute, HtmlField, HtmlFieldBuilder};
+use crate::html::HtmlFieldBuilder;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     ops::{Index, IndexMut},
 };
 
@@ -43,5 +43,16 @@ impl IndexMut<&'static str> for HtmlFormBuilder {
             Some(field) => field,
             None => panic!("WebForms - No field with name {}", field),
         }
+    }
+}
+
+impl std::fmt::Display for HtmlFormBuilder {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for (_, field) in &self.fields {
+            let builder = field.clone();
+            write!(f, "{}\n", builder.finish())?;
+        }
+
+        Ok(())
     }
 }

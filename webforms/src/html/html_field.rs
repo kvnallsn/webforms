@@ -70,6 +70,23 @@ impl HtmlFieldBuilder {
         field
     }
 
+    /// Adds `attr` to this fields attribute set, either updating the existing
+    /// value (in append mode), or replacing it completely (in replace mode)
+    ///
+    /// # Arguments
+    ///
+    /// * `attr` - New HtmlAttribute to add to this field
+    fn add_to_attributes(&mut self, attr: HtmlAttribute) {
+        if self.replace {
+            self.attrs.replace(attr);
+        } else {
+            self.attrs.insert(match self.attrs.get(&attr) {
+                Some(a) => HtmlAttribute::merge(a, &attr),
+                None => attr,
+            });
+        }
+    }
+
     /// Finializes and builds the field contained in this builder. Consumes
     /// the HtmlFieldBuilder and returns an HtmlField
     pub fn finish(self) -> HtmlField {
@@ -100,7 +117,7 @@ impl HtmlFieldBuilder {
     ///
     /// * `value` - Attribute to add
     pub fn value<S: Into<String>>(mut self, value: S) -> Self {
-        self.attrs.replace(HtmlAttribute::new_single(value));
+        self.add_to_attributes(HtmlAttribute::new_single(value));
         self
     }
 
@@ -112,7 +129,7 @@ impl HtmlFieldBuilder {
     /// * `values` - Vector of new attributes to add
     pub fn values<S: Into<String>>(mut self, values: Vec<String>) -> Self {
         for value in values {
-            self.attrs.replace(HtmlAttribute::new_single(value));
+            self.add_to_attributes(HtmlAttribute::new_single(value));
         }
         self
     }
@@ -124,8 +141,7 @@ impl HtmlFieldBuilder {
     /// * `attr` - Name of the attribute (e.g., "class")
     /// * `value` - Value of the attribute (e.g., "btn btn-large")
     pub fn attr<S: Into<String>, P: Into<String>>(mut self, attr: S, value: P) -> Self {
-        self.attrs
-            .replace(HtmlAttribute::new_pair(attr.into(), value.into()));
+        self.add_to_attributes(HtmlAttribute::new_pair(attr.into(), value.into()));
         self
     }
 
@@ -135,7 +151,9 @@ impl HtmlFieldBuilder {
     ///
     /// * `h` - Set of new Html Attributes to add (either paired or value)
     pub fn attrs(mut self, h: HashSet<HtmlAttribute>) -> Self {
-        self.attrs.extend(h);
+        for attr in h {
+            self.add_to_attributes(attr);
+        }
         self
     }
 
@@ -145,20 +163,19 @@ impl HtmlFieldBuilder {
     ///
     /// * `classes` - String of classes to apply to this field
     pub fn class<S: Into<String>>(mut self, classes: S) -> Self {
-        self.attrs
-            .replace(HtmlAttribute::new_pair("class", classes));
+        self.add_to_attributes(HtmlAttribute::new_pair("class", classes));
         self
     }
 
     /// Helper method to set required attribute on this field builder
     pub fn required(mut self) -> Self {
-        self.attrs.replace(HtmlAttribute::new_single("required"));
+        self.add_to_attributes(HtmlAttribute::new_single("required"));
         self
     }
 
     /// Helper method to unset the required attribute on this field builder
     pub fn optional(mut self) -> Self {
-        self.attrs.remove(&HtmlAttribute::new_single("required"));
+        self.add_to_attributes(HtmlAttribute::new_single("required"));
         self
     }
 }

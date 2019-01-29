@@ -1,12 +1,12 @@
 use askama::Template;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::{fs::File, io::Write};
 use webforms::{
     attrs,
     html::{HtmlForm, HtmlFormBuilder},
     validate::{ValidateError, ValidateForm},
 };
-use std::{io::Write, fs::File};
 
 #[derive(ValidateForm, HtmlForm)]
 #[validate_regex(user_re = r"^mark$")]
@@ -65,8 +65,15 @@ fn main() {
     println!("\n---------- HTML TEST ------------\n");
 
     let f = form.form();
-    let f2 = f.builder("username").value("beer").attr("drink", "beer").finish();
+    let f2 = f
+        .builder("username")
+        .value("beer")
+        .attr("drink", "beer")
+        .finish();
     println!("{}", f2);
+
+    println!("\n---------- FORM TEST ------------\n");
+    println!("{}", f);
 
     println!("\n--------- RENDER TEST -----------\n");
     let template = HelloTemplate {
