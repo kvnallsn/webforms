@@ -192,8 +192,11 @@ impl ToTokens for HtmlField {
             })
             .collect();
 
+        let values: Vec<_> = self.value_attrs.iter().collect();
+
         tokens.extend(quote! {{
-            let attrs = ::webforms::attrs!(#(#pairs),*);
+            let mut attrs = ::webforms::attrs!(#(#pairs),*);
+            #(attrs.insert(::webforms::html::HtmlAttribute::new_single(#values));)*
             ::webforms::html::HtmlFieldBuilder::with_attrs(#tag, #name, attrs)
         }})
     }

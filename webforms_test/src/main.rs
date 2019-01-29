@@ -20,9 +20,11 @@ struct LoginForm<'a> {
     pub username: &'a str,
 
     #[validate(min_length = 8)]
+    #[html_input_type(password)]
     pub password: &'a str,
 
     #[validate_match(password)]
+    #[html_input_type(password)]
     pub password2: &'a str,
 
     #[validate(email)]
@@ -34,7 +36,7 @@ struct LoginForm<'a> {
 }
 
 #[derive(Template)]
-#[template(path = "hello.html")]
+#[template(path = "hello.html", print = "code")]
 struct HelloTemplate<'a> {
     pub name: &'a str,
     pub form: HtmlFormBuilder,
@@ -63,9 +65,7 @@ fn main() {
     println!("\n---------- HTML TEST ------------\n");
 
     let f = form.form();
-    let f2 = f.field("username", &attrs!("class" => "input-override"));
-    println!("{}", f2);
-    let f2 = f.field("age", &attrs!("class" => "input-num"));
+    let f2 = f.builder("username").value("beer").attr("drink", "beer").finish();
     println!("{}", f2);
 
     println!("\n--------- RENDER TEST -----------\n");

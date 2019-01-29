@@ -28,11 +28,42 @@ impl HtmlAttribute {
         HtmlAttribute::Pair(name.into(), value.into())
     }
 
+    /// Merges two HtmlAttributes into one attribute.  This assumes the attrs
+    /// are the same and only updates the values.  Nothing is done for
+    /// value (single) attributes and returns and panics if types mismatch
+    pub fn merge(a: &HtmlAttribute, b: &HtmlAttribute) -> HtmlAttribute {
+        match a {
+            HtmlAttribute::Single(_) => match b {
+                HtmlAttribute::Single(_) => a.clone(),
+                _ => panic!("HtmlAttribute: merge failed: single -> pair"),
+            },
+            HtmlAttribute::Pair(ref attr, ref av) => match b {
+                HtmlAttribute::Pair(_, ref bv) => {
+                    HtmlAttribute::new_pair(attr.clone(), format!("{} {}", av, bv))
+                }
+                _ => panic!("HtmlAttribute: merge failed: pair -> single"),
+            },
+        }
+    }
+
     /// Human readable form of this HtmlAttribute
     pub fn render(&self) -> String {
         match &self {
             HtmlAttribute::Single(ref val) => format!(" {}", val),
             HtmlAttribute::Pair(ref name, ref val) => format!(" {}='{}'", name, val),
+        }
+    }
+
+    /// Update appends the value provided to this attribute.  For single (value) attributes,
+    /// this method does nothing.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Value to append for the attribute pair
+    pub fn update<S: Into<String>>(&self, value: S) {
+        match self {
+            HtmlAttribute::Single(_) => {}  // Do Nothing
+            HtmlAttribute::Pair(_, _) => {} // Update the valu
         }
     }
 }

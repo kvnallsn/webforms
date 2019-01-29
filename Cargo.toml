@@ -7,7 +7,7 @@ members = [
 ]
 
 [patch.crates-io]
-askama = { git = 'https://github.com/djc/askama' }
-askama_derive = { git = 'https://github.com/djc/askama' }
-askama_escape = { git = 'https://github.com/djc/askama' }
-askama_shared = { git = 'https://github.com/djc/askama' }
+askama = { path = "../../rust/askama/askama" }
+askama_derive = { path = "../../rust/askama/askama_derive" }
+askama_escape = { path = "../../rust/askama/askama_escape" }
+askama_shared = { path = "../../rust/askama/askama_shared" }

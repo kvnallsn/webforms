@@ -5,12 +5,12 @@
 <body>
     Hello, {{ name }}!
     <form>
-        {{ form.field("username", attrs!("class" => "input-override"))|safe }}
-        {{ form.field("password", attrs!("class" => "input-password", "type" => "password"))|safe }}
-        {{ form.field("password2", attrs!("class" => "input-password", "type" => "password"))|safe }}
-        {{ form.field("email", attrs!("class" => "input-password", "type" => "email"))|safe }}
-        {{ form.field("age", attrs!())|safe }}
+        {{ form.builder("username").class("input-txt").finish()|safe }}<br />
+        {{ form.builder("password").class("input-txt").attr("beer", "cold").finish()|safe }}<br />
+        <input type="submit" value="Submit">
     </form>
+    <br />
+    <br />
 </body>
 
 </html>
