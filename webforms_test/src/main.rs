@@ -10,28 +10,27 @@ use webforms::{
 
 #[derive(ValidateForm, HtmlForm)]
 #[validate_regex(user_re = r"^mark$")]
-#[html_form(method = "POST", action = "#", class = 2)]
-#[html_submit(class = "btn", value = "Next")]
 struct LoginForm<'a> {
-    #[validate(min_length = 3)]
-    #[validate(max_length = 10)]
-    #[validate(compiled_regex = "user_re")]
-    #[html(class = "input-textfield", placeholder = "Username", required)]
+    #[validate(min_length = 3, max_length = 10, compiled_regex = "user_re")]
+    #[html_validate(pattern = "^[a-z]{7}$")]
+    #[html_input(text, class = "input-text", placeholder = "Username", required)]
     pub username: &'a str,
 
     #[validate(min_length = 8)]
-    #[html_input_type(password)]
+    #[html_input(password, beer = "coors")]
     pub password: &'a str,
 
     #[validate_match(password)]
-    #[html_input_type(password)]
+    #[html_input(password)]
     pub password2: &'a str,
 
     #[validate(email)]
+    #[html_input(email)]
     pub email: &'a str,
 
     #[validate(min_value = 18)]
     #[validate(optional)]
+    #[html_validate(min = 4)]
     pub age: Option<i32>,
 }
 

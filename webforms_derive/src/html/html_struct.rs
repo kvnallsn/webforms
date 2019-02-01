@@ -1,14 +1,12 @@
 //! Implemenation of the HtmlStruct container used when parsing a struct with the #[derive(HtmlForm)] attribute
 
-use crate::{html::HtmlField, parse_attribute_list};
+use crate::html::{HtmlField, HtmlValidate};
 use quote::{quote, ToTokens};
-use std::io::Write;
 
 pub(crate) struct HtmlStruct {
     pub name: String,
-    pub form: HtmlField,
     pub fields: Vec<HtmlField>,
-    pub sumbit: HtmlField,
+    pub validators: Vec<HtmlValidate>,
 }
 
 impl HtmlStruct {
@@ -16,9 +14,8 @@ impl HtmlStruct {
         let name = ast.ident.to_string();
         let mut hs = HtmlStruct {
             name: name.clone(),
-            form: HtmlField::form(name),
             fields: vec![],
-            sumbit: HtmlField::submit(),
+            validators: vec![],
         };
         hs.parse(ast);
         hs
@@ -33,6 +30,7 @@ impl HtmlStruct {
     fn parse(&mut self, ast: &syn::DeriveInput) {
         self.parse_struct_attributes(ast);
         self.parse_fields(ast);
+        self.parse_validators(ast);
     }
 
     /// Parses any struct attributes that are attached to the struct
@@ -43,31 +41,16 @@ impl HtmlStruct {
     /// * `ast` - Abstract Syntax Tree of struct
     fn parse_struct_attributes(&mut self, ast: &syn::DeriveInput) {
         for attr in &ast.attrs {
-            if attr.path.is_ident("html_form") {
-                let mut form_field = HtmlField::tag("form");
-                parse_attribute_list(attr, |meta| match meta {
-                    syn::Meta::NameValue(ref nv) => {
-                        form_field.parse_pair_attribute(nv.ident.to_string(), &nv.lit)
-                    }
-                    _ => panic!("WebForms - Failed to parse html_form attribute"),
-                });
-                self.form = form_field;
-            } else if attr.path.is_ident("html_submit") {
-                let mut submit_field = HtmlField::tag("input");
-                submit_field.add_pair_attribute("type", "submit");
-                parse_attribute_list(attr, |meta| match meta {
-                    syn::Meta::NameValue(ref nv) => {
-                        submit_field.parse_pair_attribute(nv.ident.to_string(), &nv.lit)
-                    }
-                    _ => panic!("WebForms - Failed to parse html_submit attribute"),
-                });
-                self.sumbit = submit_field;
-            }
+            if attr.path.is_ident("html_regex") {}
         }
     }
 
-    /// Parses all attributes applied to fields on the struct deriving
-    /// HtmlForm
+    /// Parses all attributes applied to fields on the struct
+    /// deriving HtmlForm
+    ///
+    /// # Arguments
+    ///
+    /// * `ast` - Abstract Syntax Tree of struct
     fn parse_fields(&mut self, ast: &syn::DeriveInput) {
         let fields = match ast.data {
             syn::Data::Struct(syn::DataStruct {
@@ -83,14 +66,32 @@ impl HtmlStruct {
             .collect();
     }
 
+    /// Parses and builds the validators that will be used after
+    /// the form is submitted via the `validate(&self)` method
+    ///
+    /// # Arguments
+    ///
+    /// * `ast` - Abstract Syntax Tree of struct
+    fn parse_validators(&mut self, ast: &syn::DeriveInput) {
+        let fields = match ast.data {
+            syn::Data::Struct(syn::DataStruct {
+                fields: syn::Fields::Named(ref fields),
+                ..
+            }) => &fields.named,
+            _ => panic!("HtmlForm only defined on data structs!"),
+        };
+
+        self.validators = fields
+            .iter()
+            .map(|field| HtmlValidate::parse(&field))
+            .collect();
+    }
+
     pub fn write(&self) -> String {
         let mut w: Vec<u8> = Vec::new();
-        self.form.write(&mut w, true, false);
         self.fields.iter().for_each(|field| {
             field.write(&mut w, true, true);
         });
-        self.sumbit.write(&mut w, true, true);
-        write!(&mut w, "</form>").unwrap();
 
         let s = std::str::from_utf8(&w).unwrap();
         s.to_owned()

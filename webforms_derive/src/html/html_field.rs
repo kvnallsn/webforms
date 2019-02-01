@@ -69,7 +69,8 @@ impl HtmlField {
         );
 
         for attr in &field.attrs {
-            if attr.path.is_ident("html") {
+            if attr.path.is_ident("html_attrs") {
+                // Applies the list of attributes to this tag
                 parse_attribute_list(attr, |meta| match meta {
                     syn::Meta::Word(ref ident) => f.add_value_attribute(ident.to_string()),
                     syn::Meta::List(_) => panic!(""),
@@ -77,11 +78,81 @@ impl HtmlField {
                         f.parse_pair_attribute(nv.ident.to_string(), &nv.lit)
                     }
                 });
-            } else if attr.path.is_ident("html_input_type") {
-                parse_attribute_list(attr, |meta| {
-                    match meta {
-                        syn::Meta::Word(ref ident) => f.add_pair_attribute("type", ident.to_string()),
-                        _ => panic!("HtmlForm - #[html_input_type(...)] requires only a keyword type (e.g., text, password)")
+            } else if attr.path.is_ident("html_input") {
+                // Parses the #[html_input] attribute.  This attribute controls the
+                // <input> tag for the form.  The first argument MUST be a type
+                // (e.g., number, text, etc.) as specified in the html spec.  The rest
+                // of the arguments are attributes that will be applied to the tag.
+
+                let meta = attr
+                    .parse_meta()
+                    .expect("HtmlForm - failed to parse html attribue for field");
+
+                let list = match meta {
+                    syn::Meta::List(ref list) => list,
+                    _ => panic!("HtmlForm - failed to parse html_type attribute for field (meta)"),
+                };
+
+                // First argument is required to be the input field type
+                match list.nested.first() {
+                    Some(p) => match p.value() {
+                        syn::NestedMeta::Meta(m) => match m {
+                            syn::Meta::Word(ref ty) => {
+                                f.add_pair_attribute("type", ty.to_string());
+                            }
+                            _ => panic!(
+                                "HtmlForm - #[html_input] requires first argument to be type"
+                            ),
+                        },
+                        _ => panic!("HtmlForm - #[html_input] invalid first argument"),
+                    },
+                    None => panic!(
+                        "HtmlForm - #[html_input] requires at least one argument (input type)"
+                    ),
+                }
+
+                // Parse rest of list as normal
+                for attr in list.nested.iter().skip(1) {
+                    let attr = match attr {
+                        syn::NestedMeta::Meta(m) => m,
+                        _ => panic!(
+                            "HtmlForms - #[html_input] - invalid syntax after first argument"
+                        ),
+                    };
+
+                    match attr {
+                        syn::Meta::Word(ref ident) => f.add_value_attribute(ident.to_string()),
+                        syn::Meta::List(_) => {
+                            panic!("HtmlForms - #[html_input] Nested lists not allowed")
+                        }
+                        syn::Meta::NameValue(ref nv) => {
+                            f.parse_pair_attribute(nv.ident.to_string(), &nv.lit)
+                        }
+                    }
+                }
+            } else if attr.path.is_ident("html_validate") {
+                // Parses the validation critera and inserts what is available into the
+                // input tag.  Not all name/value pairs are supported in html.  Those
+                // that are not are quietly ignored here
+                parse_attribute_list(attr, |meta| match meta {
+                    syn::Meta::Word(_) => {}
+                    syn::Meta::List(_) => {}
+                    syn::Meta::NameValue(ref nv) => {
+                        if nv.ident == "min"
+                            || nv.ident == "max"
+                            || nv.ident == "maxlength"
+                            || nv.ident == "pattern"
+                        {
+                            let val = match nv.lit {
+                                syn::Lit::Int(ref i) => format!("{}", i.value()),
+                                syn::Lit::Float(ref f) => format!("{}", f.value()),
+                                syn::Lit::Str(ref s) => s.value(),
+                                _ => panic!("WebForms - #[html_validate] invalid min/max/maxlength attribute"),
+                            };
+                            f.add_pair_attribute(nv.ident.to_string(), val);
+                        } else if nv.ident == "regex" {
+                            // This is a pre-compiled regex, look to struct info to load
+                        }
                     }
                 });
             }
@@ -108,19 +179,6 @@ impl HtmlField {
         }
     }
 
-    pub fn new<S: Into<String>>(tag: S) -> HtmlField {
-        HtmlField {
-            tag: tag.into(),
-            name: None,
-            pair_attrs: HashMap::new(),
-            value_attrs: HashSet::new(),
-        }
-    }
-
-    pub fn tag<S: Into<String>>(tag: S) -> HtmlField {
-        HtmlField::new(tag)
-    }
-
     pub fn input<S: Into<String>>(name: S, ty: &syn::Type) -> HtmlField {
         let mut field = HtmlField::with_name("input", name);
         field.add_pair_attribute("type", html_input_type(ty));
@@ -129,20 +187,6 @@ impl HtmlField {
         }
 
         field
-    }
-
-    /// Creates a default form tag for the form
-    ///
-    /// # Arguments
-    /// * `name` - Name of this form
-    /// * `method` - What method to use (e.g, GET, POST) when submitting this form
-    pub fn form<S: Into<String>>(_name: S) -> HtmlField {
-        HtmlField::tag("form")
-    }
-
-    /// Creates a default submit field for a form
-    pub fn submit() -> HtmlField {
-        HtmlField::tag("input")
     }
 
     /// Writes this HTML field/tag to the specified vector

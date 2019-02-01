@@ -56,7 +56,7 @@ pub fn validate_macro_derive(input: TokenStream) -> TokenStream {
 /// Will generate valid and complient HTML for a struct that can be used
 /// with various templating languages (Tera, Askama, etc) to render forms
 /// onto webpages
-#[proc_macro_derive(HtmlForm, attributes(html, html_input_type, html_form, html_submit))]
+#[proc_macro_derive(HtmlForm, attributes(html_attrs, html_input, html_validate))]
 pub fn html_macro_derive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).expect("failed to parse HtmlForm macro input");
 

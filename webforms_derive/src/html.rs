@@ -9,10 +9,12 @@ use syn;
 mod html_defaults;
 mod html_field;
 mod html_struct;
+mod html_validate;
 
 use self::html_defaults::HtmlDefaults;
 pub(crate) use self::html_field::HtmlField;
 pub(crate) use self::html_struct::HtmlStruct;
+pub(crate) use self::html_validate::HtmlValidate;
 
 /// Lazily load the default configurations, if they exist
 lazy_static! {
