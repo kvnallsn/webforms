@@ -1,17 +1,23 @@
 //! Module to build HtmlForms
 
-use crate::html::HtmlFieldBuilder;
-use std::{
-    collections::HashMap,
-    ops::{Index, IndexMut},
-};
+use crate::html::{HtmlFieldBuilder, HtmlValidator};
+use std::collections::HashMap;
 
-#[derive(Debug)]
-pub struct HtmlFormBuilder {
-    pub fields: HashMap<&'static str, HtmlFieldBuilder>,
+pub struct HtmlFormBuilder<'a> {
+    fields: HashMap<&'static str, HtmlFieldBuilder>,
+    validators: HashMap<&'static str, HtmlValidator<'a>>,
 }
 
-impl HtmlFormBuilder {
+impl<'a> HtmlFormBuilder<'a> {
+    /// Creates a new HtmlFormBuilder with the specified fields
+    /// and validators
+    pub fn new() -> HtmlFormBuilder<'a> {
+        HtmlFormBuilder {
+            fields: HashMap::new(),
+            validators: HashMap::new(),
+        }
+    }
+
     /// Returns a Builder than can build a new HtmlField in-place. Useful when
     /// mutable references are allowed.AsMut
     ///
@@ -24,29 +30,40 @@ impl HtmlFormBuilder {
             None => panic!("WebForms - No field with name {}", field.as_ref()),
         }
     }
-}
 
-impl Index<&'static str> for HtmlFormBuilder {
-    type Output = HtmlFieldBuilder;
-
-    fn index(&self, field: &'static str) -> &HtmlFieldBuilder {
-        match self.fields.get(field) {
-            Some(field) => field,
-            None => panic!(""),
+    /// Iterates over all fields in this form builder, validating
+    /// them against the critera specified in the #[html_validate]
+    /// attribute
+    pub fn validate(&self) -> bool {
+        for (_, validator) in &self.validators {
+            validator.validate();
         }
+
+        false
     }
+
+    /// Returns all errors that occured during form validation, or
+    /// None if no errors occured
+    ///
+    /// # Arguments
+    ///
+    /// * `field` - Name of field to retrieve errors for
+    pub fn errors<S: AsRef<str>>(&self, field: S) -> Option<bool> {
+        None
+    }
+
+    /// Adds a new field builder (and thus field) to this form builder
+    pub fn add_field(&mut self, name: &'static str, field: HtmlFieldBuilder) {
+        self.fields.insert(name, field);
+    }
+
+    // Adds a new field validator to a given field
+    //pub fn add_validator(&mut self, name: &'static str, validator: HtmlValidator) {
+    //    self.validators.insert(name, validator);
+    //}
 }
 
-impl IndexMut<&'static str> for HtmlFormBuilder {
-    fn index_mut(&mut self, field: &'static str) -> &mut HtmlFieldBuilder {
-        match self.fields.get_mut(field) {
-            Some(field) => field,
-            None => panic!("WebForms - No field with name {}", field),
-        }
-    }
-}
-
-impl std::fmt::Display for HtmlFormBuilder {
+impl<'a> std::fmt::Display for HtmlFormBuilder<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         for (_, field) in &self.fields {
             let builder = field.clone();

@@ -8,29 +8,28 @@ use webforms::{
     validate::{ValidateError, ValidateForm},
 };
 
-#[derive(ValidateForm, HtmlForm)]
-#[validate_regex(user_re = r"^mark$")]
+#[derive(HtmlForm)]
+//#[validate_regex(user_re = r"^mark$")]
 struct LoginForm<'a> {
-    #[validate(min_length = 3, max_length = 10, compiled_regex = "user_re")]
+    //#[validate(min_length = 3, max_length = 10, compiled_regex = "user_re")]
     #[html_validate(pattern = "^[a-z]{7}$")]
     #[html_input(text, class = "input-text", placeholder = "Username", required)]
     pub username: &'a str,
 
-    #[validate(min_length = 8)]
+    //#[validate(min_length = 8)]
     #[html_input(password, beer = "coors")]
     pub password: &'a str,
 
-    #[validate_match(password)]
+    //#[validate_match(password)]
     #[html_input(password)]
     pub password2: &'a str,
 
-    #[validate(email)]
+    //#[validate(email)]
     #[html_input(email)]
     pub email: &'a str,
 
-    #[validate(min_value = 18)]
-    #[validate(optional)]
-    #[html_validate(min = 4)]
+    #[html_validate(min = 18)]
+    //#[validate(optional)]
     pub age: Option<i32>,
 }
 
@@ -38,7 +37,7 @@ struct LoginForm<'a> {
 #[template(path = "hello.html", print = "code")]
 struct HelloTemplate<'a> {
     pub name: &'a str,
-    pub form: HtmlFormBuilder,
+    pub form: HtmlFormBuilder<'a>,
 }
 
 fn main() {
@@ -52,13 +51,9 @@ fn main() {
 
     println!("\n-------- VALIDATE TEST ----------\n");
 
-    match form.validate() {
-        Ok(_) => println!("Validate Success!"),
-        Err(errs) => {
-            for err in errs {
-                println!("{}", err);
-            }
-        }
+    match form.validate_form() {
+        true => println!("Validate Success!"),
+        false => println!("Validate Failure!")
     };
 
     println!("\n---------- HTML TEST ------------\n");

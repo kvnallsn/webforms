@@ -1,7 +1,6 @@
 //! Implemenation of the HtmlStruct container used when parsing a struct with the #[derive(HtmlForm)] attribute
 
 use crate::html::{HtmlField, HtmlValidate};
-use quote::{quote, ToTokens};
 
 pub(crate) struct HtmlStruct {
     pub name: String,
@@ -85,24 +84,5 @@ impl HtmlStruct {
             .iter()
             .map(|field| HtmlValidate::parse(&field))
             .collect();
-    }
-
-    pub fn write(&self) -> String {
-        let mut w: Vec<u8> = Vec::new();
-        self.fields.iter().for_each(|field| {
-            field.write(&mut w, true, true);
-        });
-
-        let s = std::str::from_utf8(&w).unwrap();
-        s.to_owned()
-    }
-}
-
-impl ToTokens for HtmlStruct {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let s = self.write();
-        tokens.extend(quote! {
-            #s
-        })
     }
 }

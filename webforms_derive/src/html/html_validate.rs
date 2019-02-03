@@ -1,21 +1,20 @@
 //! Handles the html validation attribute
 
 use crate::{is_option, parse_attribute_list};
+use quote::{quote, ToTokens};
 
-/// All possible validators supported.
+#[derive(Clone)]
 enum Validator {
-    MinValue(u64),
-    MaxValue(u64),
-    MinFloat(f64),
-    MaxFloat(f64),
-    MinLength(u64),
-    MaxLength(u64),
-    Pattern(String),
+    MinValue(syn::LitInt),
+    MaxValue(syn::LitInt),
+    MinFloat(syn::LitFloat),
 }
 
+#[derive(Clone)]
 pub(crate) struct HtmlValidate {
-    name: String,
-    validators: Vec<Validator>,
+    name: Option<proc_macro2::Ident>,
+    validators: Vec<proc_macro2::TokenStream>,
+    validators2: Vec<Validator>,
     optional: bool,
 }
 
@@ -27,12 +26,9 @@ impl HtmlValidate {
     /// * `field` - Field to parse validators from
     pub fn parse(field: &syn::Field) -> HtmlValidate {
         let mut validator = HtmlValidate {
-            name: field
-                .ident
-                .as_ref()
-                .expect("HtmlForm - requires named fields")
-                .to_string(),
+            name: field.ident.clone(),
             validators: vec![],
+            validators2: Vec::new(),
             optional: is_option(&field.ty),
         };
 
@@ -45,35 +41,35 @@ impl HtmlValidate {
                     syn::Meta::List(_) => {}
                     syn::Meta::NameValue(ref nv) => {
                         if nv.ident == "min" {
-                            validator.add_validator(
+                            validator.add_validator2(
                                 match nv.lit {
-                                    syn::Lit::Int(ref i) => Validator::MinValue(i.value()),
-                                    syn::Lit::Float(ref f) => Validator::MinFloat(f.value()),
+                                    syn::Lit::Int(ref i) => Validator::MinValue(i.clone()),
+                                    syn::Lit::Float(ref f) => Validator::MinFloat(f.clone()),
                                     _ => panic!("WebForms - #[html_validate] min specifier requires an int or float argument"),
                             });
                         } else if nv.ident == "max" {
                             validator.add_validator(
                                 match nv.lit {
-                                    syn::Lit::Int(ref i) => Validator::MaxValue(i.value()),
-                                    syn::Lit::Float(ref f) => Validator::MaxFloat(f.value()),
+                                    syn::Lit::Int(ref i) => quote! { ::webforms::html::Validator::MaxValue(#i) },
+                                    syn::Lit::Float(ref f) => quote! { ::webforms::html::Validator::MaxValue(#f) },
                                     _ => panic!("WebForms - #[html_validate] max specifier requires an int or float argument"),
                             });
                         } else if nv.ident == "minlength" {
                             validator.add_validator(
                                 match nv.lit {
-                                    syn::Lit::Int(ref i) => Validator::MinLength(i.value()),
+                                    syn::Lit::Int(ref i) => quote! { ::webforms::html::Validator::MinLength(#i) },
                                     _ => panic!("WebForms - #[html_validate] minlength specifier requires an int argument"),
                             });
                         } else if nv.ident == "maxlength" {
                             validator.add_validator(
                                 match nv.lit {
-                                    syn::Lit::Int(ref i) => Validator::MaxLength(i.value()),
+                                    syn::Lit::Int(ref i) => quote! { ::webforms::html::Validator::MaxLength(#i) },
                                     _ => panic!("WebForms - #[html_validate] maxlength specifier requires an int argument"),
                             });
                         } else if nv.ident == "pattern" {
                             validator.add_validator(
                                 match nv.lit {
-                                    syn::Lit::Str(ref s) => Validator::Pattern(s.value()),
+                                    syn::Lit::Str(ref s) => quote! { ::webforms::html::Validator::Pattern(#s) },
                                     _ => panic!("WebForms - #[html_validate] pattern specifier requires an string or regex argument"),
                             });
                         }
@@ -90,7 +86,44 @@ impl HtmlValidate {
     /// # Arguments
     ///
     /// * `v` - Validator (from Validator Enums) to add
-    fn add_validator(&mut self, v: Validator) {
-        self.validators.push(v);
+    fn add_validator(&mut self, t: proc_macro2::TokenStream) {
+        self.validators.push(t);
+    }
+
+    fn add_validator2(&mut self, v: Validator) {
+        self.validators2.push(v);
+    }
+}
+
+impl Validator {
+    pub fn write(&self, field: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+        match self {
+            Validator::MinValue(i) => quote! { #field.clone() > #i },
+            Validator::MinFloat(f) => quote! { #field.clone() > #f },
+            Validator::MaxValue(i) => quote! { #field.clone() < #i },
+            _ => panic!("TESDF"),
+        }
+    }
+}
+
+impl ToTokens for Validator {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {}
+}
+
+impl ToTokens for HtmlValidate {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let name = &self.name;
+        let field = match self.optional {
+            true => quote! { self.#name.unwrap() },
+            false => quote! { self.#name },
+        };
+
+        let v: Vec<_> = self.validators2.iter().map(|v| v.write(&field)).collect();
+
+        //tokens.extend(quote! { ::webforms::html::HtmlValidator::with_fn(|| true); });
+        tokens.extend(
+            quote! { ::webforms::html::HtmlValidator::with_fns(vec![#(Box::new(&|| #v)),*]) },
+        );
+        //tokens.extend(quote! {::webforms::html::HtmlValidator::with_validators(vec![#(#v,)*])});
     }
 }

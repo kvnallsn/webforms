@@ -1,6 +1,9 @@
 //! Implemenation of the HtmlField container used when parsing a field in a struct with the #[derive(HtmlForm)] attribute
 
-use crate::{html::html_input_type, is_option, parse_attribute_list};
+use crate::{
+    html::{html_input_type, HtmlValidate},
+    is_option, parse_attribute_list,
+};
 use quote::{quote, ToTokens};
 use std::collections::{HashMap, HashSet};
 
@@ -9,6 +12,7 @@ pub(crate) struct HtmlField {
     pub name: Option<String>,
     pub pair_attrs: HashMap<String, String>,
     pub value_attrs: HashSet<String>,
+    pub validators: Vec<HtmlValidate>,
 }
 
 impl HtmlField {
@@ -59,14 +63,12 @@ impl HtmlField {
 
     /// Creates a new HtmlField by parsing all attributes attached to the field
     pub fn parse(field: &syn::Field) -> HtmlField {
-        let mut f = HtmlField::input(
-            field
-                .ident
-                .as_ref()
-                .expect("HtmlForm - requires named fields")
-                .to_string(),
-            &field.ty,
-        );
+        let field_name = field
+            .ident
+            .as_ref()
+            .expect("HtmlForm - requires named fields")
+            .to_string();
+        let mut f = HtmlField::input(field_name.clone(), &field.ty);
 
         for attr in &field.attrs {
             if attr.path.is_ident("html_attrs") {
@@ -138,6 +140,7 @@ impl HtmlField {
                     syn::Meta::Word(_) => {}
                     syn::Meta::List(_) => {}
                     syn::Meta::NameValue(ref nv) => {
+                        // First handle setting the right attributes for the html tag itself
                         if nv.ident == "min"
                             || nv.ident == "max"
                             || nv.ident == "maxlength"
@@ -147,12 +150,14 @@ impl HtmlField {
                                 syn::Lit::Int(ref i) => format!("{}", i.value()),
                                 syn::Lit::Float(ref f) => format!("{}", f.value()),
                                 syn::Lit::Str(ref s) => s.value(),
-                                _ => panic!("WebForms - #[html_validate] invalid min/max/maxlength attribute"),
+                                _ => panic!("WebForms - #[html_validate] invalid min/max/maxlength/pattern attribute on field '{}'", &field_name),
                             };
                             f.add_pair_attribute(nv.ident.to_string(), val);
                         } else if nv.ident == "regex" {
                             // This is a pre-compiled regex, look to struct info to load
                         }
+
+                        // Next build the validators that can be run server side
                     }
                 });
             }
@@ -176,6 +181,7 @@ impl HtmlField {
             name: Some(name.into()),
             pair_attrs: HashMap::new(),
             value_attrs: HashSet::new(),
+            validators: Vec::new(),
         }
     }
 
@@ -187,37 +193,6 @@ impl HtmlField {
         }
 
         field
-    }
-
-    /// Writes this HTML field/tag to the specified vector
-    ///
-    /// # Arguments
-    ///
-    /// * `w` - Vector of u8's to write to
-    /// * `newline` - True to print a newline character after the tag
-    /// * `indent` - True to indent (via a tab) this field
-    pub fn write(&self, writer: &mut std::io::Write, newline: bool, indent: bool) {
-        if indent {
-            write!(writer, "\t").unwrap();
-        }
-
-        write!(writer, "<{}", &self.tag).unwrap();
-        if let Some(name) = &self.name {
-            write!(writer, " name='{}'", name).unwrap();
-        }
-
-        self.pair_attrs
-            .iter()
-            .for_each(|(attr, value)| write!(writer, " {}='{}'", attr, value).unwrap());
-
-        self.value_attrs
-            .iter()
-            .for_each(|value| write!(writer, " {}", value).unwrap());
-
-        write!(writer, ">").unwrap();
-        if newline {
-            write!(writer, "\n").unwrap();
-        }
     }
 }
 

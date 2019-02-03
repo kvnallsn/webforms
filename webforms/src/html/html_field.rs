@@ -1,6 +1,6 @@
 //! Represents an Html Tag/Field
 
-use crate::html::HtmlAttribute;
+use crate::html::{HtmlAttribute, HtmlValidator};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug)]

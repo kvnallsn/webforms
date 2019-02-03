@@ -29,6 +29,7 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
     let st = HtmlStruct::new(&ast);
 
     let fields = &st.fields;
+    let validators = &st.validators;
     let field_names: Vec<&str> = st
         .fields
         .iter()
@@ -37,16 +38,25 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
             None => "Unknown",
         })
         .collect();
+    let field_names2 = field_names.clone();
 
     let gen = quote! {
         impl #generics ::webforms::html::HtmlForm for #name #generics {
 
+            /// Creates a form builder from the fields and attributes specified
+            /// on the struct
             fn form(&self) -> ::webforms::html::HtmlFormBuilder {
-                let mut form = ::webforms::html::HtmlFormBuilder {
-                    fields: std::collections::HashMap::new()
-                };
-                #(form.fields.insert(#field_names, #fields);)*
+                let mut form = ::webforms::html::HtmlFormBuilder::new();
+                #(form.add_field(#field_names, #fields);)*
                 form
+            }
+
+            /// Helper method to validate a form.  Retrieves an HtmlFormBuilder
+            /// and calls through to it's validate method.  Returns true if
+            /// the form successfully validated, false otherwise
+            fn validate_form(&self) -> bool {
+                #(#validators;)*
+                false
             }
         }
     };

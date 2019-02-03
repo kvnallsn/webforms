@@ -30,10 +30,12 @@ macro_rules! attrs {
 mod html_attribute;
 mod html_field;
 mod html_form_builder;
+mod html_validate;
 
 pub use self::html_attribute::HtmlAttribute;
 pub use self::html_field::{HtmlField, HtmlFieldBuilder};
 pub use self::html_form_builder::HtmlFormBuilder;
+pub use self::html_validate::{HtmlValidator, Validator};
 
 /// HtmlForm provides two methods, render_field and render_form. Both provide
 /// different ways to accomplish the same goal, rendering a form as valid and safe
@@ -41,4 +43,7 @@ pub use self::html_form_builder::HtmlFormBuilder;
 pub trait HtmlForm {
     /// Return the HTML form of this form
     fn form(&self) -> HtmlFormBuilder;
+
+    /// Validates the form
+    fn validate_form(&self) -> bool;
 }
