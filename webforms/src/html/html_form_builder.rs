@@ -1,12 +1,13 @@
 //! Module to build HtmlForms
 
-use crate::html::HtmlFieldBuilder;
+use crate::html::{FieldValidator, HtmlFieldBuilder};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
 pub struct HtmlFormBuilder<'a> {
     fields: HashMap<&'static str, HtmlFieldBuilder>,
+    errors: HashMap<&'static str, String>,
     validated: bool,
     phantom: PhantomData<&'a i32>,
 }
@@ -17,6 +18,7 @@ impl<'a> HtmlFormBuilder<'a> {
     pub fn new() -> HtmlFormBuilder<'a> {
         HtmlFormBuilder {
             fields: HashMap::new(),
+            errors: HashMap::new(),
             validated: false,
             phantom: PhantomData,
         }
@@ -49,8 +51,10 @@ impl<'a> HtmlFormBuilder<'a> {
     ///
     /// * `value` - Value of field to validate
     /// * `validators` - Vector of closures to validate against
-    pub fn validate_field<T: Debug>(&mut self, value: &T, validators: Vec<Box<&Fn(&T) -> bool>>) {
-        self.validated = validators.iter().all(|x| x(value));
+    //pub fn validate_field<T: Debug>(&mut self, value: &T, validators: Vec<Box<&Fn(&T) -> bool>>) {
+    pub fn validate_field<T>(&mut self, value: &T, validator: FieldValidator<'a, T>) {
+        //self.validated = validators.iter().all(|x| x(value));
+        self.validated = validator.validate(value, &mut self.errors);
     }
 
     /// Returns all errors that occured during form validation, or
@@ -61,6 +65,10 @@ impl<'a> HtmlFormBuilder<'a> {
     /// * `field` - Name of field to retrieve errors for
     pub fn errors<S: AsRef<str>>(&self, _field: S) -> Option<bool> {
         None
+    }
+
+    pub fn errs(&self) -> &HashMap<&'static str, String> {
+        &self.errors
     }
 
     /// Adds a new field builder (and thus field) to this form builder

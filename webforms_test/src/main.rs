@@ -2,9 +2,7 @@ use askama::Template;
 //use lazy_static::lazy_static;
 //use regex::Regex;
 use std::{fs::File, io::Write};
-use webforms::{
-    html::{HtmlForm, HtmlFormBuilder},
-};
+use webforms::html::{HtmlForm, HtmlFormBuilder};
 
 #[derive(HtmlForm)]
 //#[validate_regex(user_re = r"^mark$")]
@@ -28,7 +26,8 @@ struct LoginForm<'a> {
     #[html_validate(min = 18)]
     pub age: Option<i32>,
 
-    #[html_validate(min = 5)]
+    #[html_validate(min = 5, max = 10)]
+    #[html_error(min = "Too Small!", max = "Too Large!")]
     pub val: i32,
 }
 
@@ -46,7 +45,7 @@ fn main() {
         password2: "aa",
         email: "mike@mail.com",
         age: Some(19),
-        val: 5,
+        val: 40,
     };
 
     println!("\n-------- VALIDATE TEST ----------\n");
@@ -54,7 +53,11 @@ fn main() {
     let f = form.form();
     match f.validated() {
         true => println!("Validate Success!"),
-        false => println!("Validate Failure!")
+        false => {
+            for (_, err) in f.errs() {
+                println!("Error: {}", err);
+            }
+        }
     };
 
     println!("\n---------- HTML TEST ------------\n");

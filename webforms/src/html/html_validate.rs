@@ -1,17 +1,19 @@
 //! Common attribute validation critera
 
-pub struct ValidateFunction<'a, T> {
-    field: String,
-    validators: Vec<Box<&'a Fn(&T) -> bool>>,
+use std::collections::HashMap;
+
+type CheckFn<T> = Fn(&T) -> std::result::Result<(), &'static str>;
+//type CheckFn<T> = Fn(T) -> bool;
+
+pub struct FieldValidator<'a, T> {
+    field: &'static str,
+    validators: Vec<Box<&'a CheckFn<T>>>,
 }
 
-impl<'a, T> ValidateFunction<'a, T> {
-    pub fn new<S: Into<String>>(
-        field: S,
-        fns: Vec<Box<&'a Fn(&T) -> bool>>,
-    ) -> ValidateFunction<'a, T> {
-        ValidateFunction {
-            field: field.into(),
+impl<'a, T> FieldValidator<'a, T> {
+    pub fn new(field: &'static str, fns: Vec<Box<&'a CheckFn<T>>>) -> FieldValidator<'a, T> {
+        FieldValidator {
+            field: field,
             validators: fns,
         }
     }
@@ -20,7 +22,13 @@ impl<'a, T> ValidateFunction<'a, T> {
         &self.field
     }
 
-    pub fn validate(&self, value: &T) -> bool {
-        self.validators.iter().all(|x| x(value))
+    pub fn validate(&self, value: &T, errors: &mut HashMap<&'static str, String>) -> bool {
+        self.validators.iter().all(|x| match x(value) {
+            Ok(_) => true,
+            Err(e) => {
+                errors.entry(self.field).or_insert(e.to_string());
+                false
+            }
+        })
     }
 }
