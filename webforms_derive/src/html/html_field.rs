@@ -7,15 +7,50 @@ use crate::{
 use quote::{quote, ToTokens};
 use std::collections::{HashMap, HashSet};
 
-pub(crate) struct HtmlField {
+pub(crate) struct HtmlField<'a> {
+    pub ident: &'a Option<proc_macro2::Ident>,
     pub tag: String,
     pub name: Option<String>,
     pub pair_attrs: HashMap<String, String>,
     pub value_attrs: HashSet<String>,
-    pub validators: Vec<HtmlValidate>,
+    pub validators: Vec<HtmlValidate<'a>>,
+    pub optional: bool,
 }
 
-impl HtmlField {
+impl<'a> HtmlField<'a> {
+    /// Creates a new HtmlField manually, by specifying a name for the element to have
+    /// Note: This name should NOT conflict with other names that may be parsed via
+    /// `parse`
+    ///
+    /// # Arguments
+    ///
+    /// * `tag` - HTML tag to use for this field
+    /// * `name` - Name of this field
+    /// * `attrs` - Vector of HtmlFieldAttributes
+    pub fn with_name<S: Into<String>>(tag: S, field: &syn::Field) -> HtmlField {
+        let name = field.ident.as_ref().map(|i| i.to_string());
+
+        HtmlField {
+            ident: &field.ident,
+            tag: tag.into(),
+            name: name,
+            pair_attrs: HashMap::new(),
+            value_attrs: HashSet::new(),
+            validators: Vec::new(),
+            optional: is_option(&field.ty),
+        }
+    }
+
+    pub fn input(field: &syn::Field) -> HtmlField {
+        let mut html_field = HtmlField::with_name("input", field);
+        html_field.add_pair_attribute("type", html_input_type(&field.ty));
+        if !html_field.optional {
+            html_field.add_value_attribute("required");
+        }
+
+        html_field
+    }
+
     /// Adds an pair-type attribue (e.g. class='input') to this field
     ///
     /// # Arguments
@@ -63,12 +98,7 @@ impl HtmlField {
 
     /// Creates a new HtmlField by parsing all attributes attached to the field
     pub fn parse(field: &syn::Field) -> HtmlField {
-        let field_name = field
-            .ident
-            .as_ref()
-            .expect("HtmlForm - requires named fields")
-            .to_string();
-        let mut f = HtmlField::input(field_name.clone(), &field.ty);
+        let mut f = HtmlField::input(field);
 
         for attr in &field.attrs {
             if attr.path.is_ident("html_attrs") {
@@ -150,7 +180,7 @@ impl HtmlField {
                                 syn::Lit::Int(ref i) => format!("{}", i.value()),
                                 syn::Lit::Float(ref f) => format!("{}", f.value()),
                                 syn::Lit::Str(ref s) => s.value(),
-                                _ => panic!("WebForms - #[html_validate] invalid min/max/maxlength/pattern attribute on field '{}'", &field_name),
+                                _ => panic!("WebForms - #[html_validate] invalid min/max/maxlength/pattern attribute on field '{}'", ""),
                             };
                             f.add_pair_attribute(nv.ident.to_string(), val);
                         } else if nv.ident == "regex" {
@@ -165,38 +195,9 @@ impl HtmlField {
 
         f
     }
-
-    /// Creates a new HtmlField manually, by specifying a name for the element to have
-    /// Note: This name should NOT conflict with other names that may be parsed via
-    /// `parse`
-    ///
-    /// # Arguments
-    ///
-    /// * `tag` - HTML tag to use for this field
-    /// * `name` - Name of this field
-    /// * `attrs` - Vector of HtmlFieldAttributes
-    pub fn with_name<S: Into<String>, P: Into<String>>(tag: S, name: P) -> HtmlField {
-        HtmlField {
-            tag: tag.into(),
-            name: Some(name.into()),
-            pair_attrs: HashMap::new(),
-            value_attrs: HashSet::new(),
-            validators: Vec::new(),
-        }
-    }
-
-    pub fn input<S: Into<String>>(name: S, ty: &syn::Type) -> HtmlField {
-        let mut field = HtmlField::with_name("input", name);
-        field.add_pair_attribute("type", html_input_type(ty));
-        if !is_option(ty) {
-            field.add_value_attribute("required");
-        }
-
-        field
-    }
 }
 
-impl ToTokens for HtmlField {
+impl<'a> ToTokens for HtmlField<'a> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let tag = &self.tag;
         let name = match self.name {

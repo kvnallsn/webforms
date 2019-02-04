@@ -1,11 +1,14 @@
 //! Module to build HtmlForms
 
-use crate::html::{HtmlFieldBuilder, HtmlValidator};
+use crate::html::HtmlFieldBuilder;
 use std::collections::HashMap;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 
 pub struct HtmlFormBuilder<'a> {
     fields: HashMap<&'static str, HtmlFieldBuilder>,
-    validators: HashMap<&'static str, HtmlValidator<'a>>,
+    validated: bool,
+    phantom: PhantomData<&'a i32>,
 }
 
 impl<'a> HtmlFormBuilder<'a> {
@@ -14,7 +17,8 @@ impl<'a> HtmlFormBuilder<'a> {
     pub fn new() -> HtmlFormBuilder<'a> {
         HtmlFormBuilder {
             fields: HashMap::new(),
-            validators: HashMap::new(),
+            validated: false,
+            phantom: PhantomData,
         }
     }
 
@@ -31,15 +35,22 @@ impl<'a> HtmlFormBuilder<'a> {
         }
     }
 
-    /// Iterates over all fields in this form builder, validating
-    /// them against the critera specified in the #[html_validate]
-    /// attribute
-    pub fn validate(&self) -> bool {
-        for (_, validator) in &self.validators {
-            validator.validate();
-        }
+    /// Returns true if this form has been sucessfully validated,
+    /// false if validation failed or it never occured (i.e., called
+    /// `blank_form`)
+    pub fn validated(&self) -> bool {
+        self.validated
+    }
 
-        false
+    /// Validates a field's value against a list of closures, setting the
+    /// validated field appropriately
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Value of field to validate
+    /// * `validators` - Vector of closures to validate against
+    pub fn validate_field<T: Debug>(&mut self, value: &T, validators: Vec<Box<&Fn(&T) -> bool>>) {
+        self.validated = validators.iter().all(|x| x(value));
     }
 
     /// Returns all errors that occured during form validation, or
@@ -48,7 +59,7 @@ impl<'a> HtmlFormBuilder<'a> {
     /// # Arguments
     ///
     /// * `field` - Name of field to retrieve errors for
-    pub fn errors<S: AsRef<str>>(&self, field: S) -> Option<bool> {
+    pub fn errors<S: AsRef<str>>(&self, _field: S) -> Option<bool> {
         None
     }
 
@@ -56,11 +67,6 @@ impl<'a> HtmlFormBuilder<'a> {
     pub fn add_field(&mut self, name: &'static str, field: HtmlFieldBuilder) {
         self.fields.insert(name, field);
     }
-
-    // Adds a new field validator to a given field
-    //pub fn add_validator(&mut self, name: &'static str, validator: HtmlValidator) {
-    //    self.validators.insert(name, validator);
-    //}
 }
 
 impl<'a> std::fmt::Display for HtmlFormBuilder<'a> {

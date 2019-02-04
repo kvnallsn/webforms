@@ -1,17 +1,14 @@
 use askama::Template;
-use lazy_static::lazy_static;
-use regex::Regex;
+//use lazy_static::lazy_static;
+//use regex::Regex;
 use std::{fs::File, io::Write};
 use webforms::{
-    attrs,
     html::{HtmlForm, HtmlFormBuilder},
-    validate::{ValidateError, ValidateForm},
 };
 
 #[derive(HtmlForm)]
 //#[validate_regex(user_re = r"^mark$")]
 struct LoginForm<'a> {
-    //#[validate(min_length = 3, max_length = 10, compiled_regex = "user_re")]
     #[html_validate(pattern = "^[a-z]{7}$")]
     #[html_input(text, class = "input-text", placeholder = "Username", required)]
     pub username: &'a str,
@@ -29,12 +26,14 @@ struct LoginForm<'a> {
     pub email: &'a str,
 
     #[html_validate(min = 18)]
-    //#[validate(optional)]
     pub age: Option<i32>,
+
+    #[html_validate(min = 5)]
+    pub val: i32,
 }
 
 #[derive(Template)]
-#[template(path = "hello.html", print = "code")]
+#[template(path = "hello.html")]
 struct HelloTemplate<'a> {
     pub name: &'a str,
     pub form: HtmlFormBuilder<'a>,
@@ -46,12 +45,14 @@ fn main() {
         password: "a",
         password2: "aa",
         email: "mike@mail.com",
-        age: Some(17),
+        age: Some(19),
+        val: 5,
     };
 
     println!("\n-------- VALIDATE TEST ----------\n");
 
-    match form.validate_form() {
+    let f = form.form();
+    match f.validated() {
         true => println!("Validate Success!"),
         false => println!("Validate Failure!")
     };

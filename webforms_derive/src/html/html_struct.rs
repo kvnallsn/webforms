@@ -2,22 +2,20 @@
 
 use crate::html::{HtmlField, HtmlValidate};
 
-pub(crate) struct HtmlStruct {
+pub(crate) struct HtmlStruct<'a> {
     pub name: String,
-    pub fields: Vec<HtmlField>,
-    pub validators: Vec<HtmlValidate>,
+    pub fields: Vec<HtmlField<'a>>,
+    pub validators: Vec<HtmlValidate<'a>>,
 }
 
-impl HtmlStruct {
-    pub fn new(ast: &syn::DeriveInput) -> HtmlStruct {
+impl<'a> HtmlStruct<'a> {
+    fn new(ast: &'a syn::DeriveInput) -> HtmlStruct<'a> {
         let name = ast.ident.to_string();
-        let mut hs = HtmlStruct {
+        HtmlStruct {
             name: name.clone(),
-            fields: vec![],
-            validators: vec![],
-        };
-        hs.parse(ast);
-        hs
+            fields: Vec::new(),
+            validators: Vec::new(),
+        }
     }
 
     /// Parses a struct with the #[derive(HtmlForm)] attribute.  This is
@@ -26,10 +24,12 @@ impl HtmlStruct {
     /// # Arguments
     ///
     /// * `ast` - The abstract syntax tree to parse
-    fn parse(&mut self, ast: &syn::DeriveInput) {
-        self.parse_struct_attributes(ast);
-        self.parse_fields(ast);
-        self.parse_validators(ast);
+    pub fn parse(ast: &'a syn::DeriveInput) -> HtmlStruct<'a> {
+        let mut hs = HtmlStruct::new(ast);
+        hs.parse_struct_attributes(ast);
+        hs.parse_fields(ast);
+        hs.parse_validators(ast);
+        hs
     }
 
     /// Parses any struct attributes that are attached to the struct
@@ -50,7 +50,7 @@ impl HtmlStruct {
     /// # Arguments
     ///
     /// * `ast` - Abstract Syntax Tree of struct
-    fn parse_fields(&mut self, ast: &syn::DeriveInput) {
+    fn parse_fields(&mut self, ast: &'a syn::DeriveInput) {
         let fields = match ast.data {
             syn::Data::Struct(syn::DataStruct {
                 fields: syn::Fields::Named(ref fields),
@@ -71,7 +71,7 @@ impl HtmlStruct {
     /// # Arguments
     ///
     /// * `ast` - Abstract Syntax Tree of struct
-    fn parse_validators(&mut self, ast: &syn::DeriveInput) {
+    fn parse_validators(&mut self, ast: &'a syn::DeriveInput) {
         let fields = match ast.data {
             syn::Data::Struct(syn::DataStruct {
                 fields: syn::Fields::Named(ref fields),

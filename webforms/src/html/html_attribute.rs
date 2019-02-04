@@ -60,7 +60,7 @@ impl HtmlAttribute {
     /// # Arguments
     ///
     /// * `value` - Value to append for the attribute pair
-    pub fn update<S: Into<String>>(&self, value: S) {
+    pub fn update<S: Into<String>>(&self, _value: S) {
         match self {
             HtmlAttribute::Single(_) => {}  // Do Nothing
             HtmlAttribute::Pair(_, _) => {} // Update the valu

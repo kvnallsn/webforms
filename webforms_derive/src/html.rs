@@ -26,7 +26,7 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let generics = &ast.generics;
 
-    let st = HtmlStruct::new(&ast);
+    let st = HtmlStruct::parse(&ast);
 
     let fields = &st.fields;
     let validators = &st.validators;
@@ -38,7 +38,8 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
             None => "Unknown",
         })
         .collect();
-    let field_names2 = field_names.clone();
+
+    let field_idents: Vec<_> = st.fields.iter().map(|f| &f.ident).collect();
 
     let gen = quote! {
         impl #generics ::webforms::html::HtmlForm for #name #generics {
@@ -46,20 +47,21 @@ pub(crate) fn impl_html_macro(ast: syn::DeriveInput) -> TokenStream {
             /// Creates a form builder from the fields and attributes specified
             /// on the struct
             fn form(&self) -> ::webforms::html::HtmlFormBuilder {
+                let mut form = self.blank_form();
+                #(form.validate_field(&self.#field_idents, #validators);)*
+                form
+            }
+
+            /// Generates a blank (non-validated) form
+            fn blank_form(&self) -> ::webforms::html::HtmlFormBuilder {
                 let mut form = ::webforms::html::HtmlFormBuilder::new();
                 #(form.add_field(#field_names, #fields);)*
                 form
             }
-
-            /// Helper method to validate a form.  Retrieves an HtmlFormBuilder
-            /// and calls through to it's validate method.  Returns true if
-            /// the form successfully validated, false otherwise
-            fn validate_form(&self) -> bool {
-                #(#validators;)*
-                false
-            }
         }
     };
+
+    //println!("{}", gen);
 
     gen.into()
 }
